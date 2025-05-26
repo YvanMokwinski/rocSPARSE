@@ -551,12 +551,12 @@ namespace rocsparse
     }
 
 }
+
 /*
  * ===========================================================================
  *    C wrapper
  * ===========================================================================
  */
-
 extern "C" rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle,
                                                          rocsparse_sptrsv_descr      sptrsv_descr,
                                                          rocsparse_const_spmat_descr spmat_descr,
