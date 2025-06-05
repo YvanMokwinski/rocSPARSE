@@ -350,6 +350,8 @@ set(rocsparse_source
   src/level3/rocsparse_bsrsm_template_large.cpp
   src/level3/rocsparse_gemmi.cpp
   src/level3/rocsparse_sddmm.cpp
+  src/level3/rocsparse_sddmm_buffer_size.cpp
+  src/level3/rocsparse_sddmm_preprocess.cpp
   src/level3/rocsparse_sddmm_coo.cpp
   src/level3/rocsparse_sddmm_coo_aos.cpp
   src/level3/rocsparse_sddmm_csr.cpp

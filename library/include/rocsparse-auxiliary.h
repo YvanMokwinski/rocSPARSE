@@ -1388,6 +1388,39 @@ rocsparse_status rocsparse_spgeam_get_output(rocsparse_handle        handle,
                                              size_t                  data_size_in_bytes);
 
 /*! \ingroup aux_module
+   *  \brief Sample dense-dense matrix product operation, SDDMM.
+   *
+   *  \details
+   *  \p rocsparse_create_sddmm_descr creates the descriptor of the \ref rocsparse_v2_sddmm_buffer_size and
+   *  \ref rocsparse_v2_sddmm routines.
+
+   *  @param[in]
+   *  handle      the pointer to the handle to the rocSPARSE library context.
+   *  @param[out]
+   *  descr        pointer to the descriptor of the sddmm routine.
+   *
+   *  \retval      rocsparse_status_success the operation completed successfully.
+   *  \retval      rocsparse_status_invalid_pointer \p descr pointer is invalid.
+   */
+ROCSPARSE_EXPORT
+rocsparse_status rocsparse_create_sddmm_descr(rocsparse_handle handle, rocsparse_sddmm_descr* descr);
+
+/*! \ingroup aux_module
+   *  \brief Sample dense-dense matrix product operation, SDDMM.
+   *
+   *  \details
+   *  \p rocsparse_destroy_sddmm_descr destroys the descriptor of the \ref rocsparse_v2_sddmm_buffer_size and
+   *  \ref rocsparse_v2_sddmm routines.
+   *
+   *  @param[in]
+   *  descr        descriptor of the v2_sddmm routine.
+*  \retval      rocsparse_status_success the operation completed successfully.
+*/
+ROCSPARSE_EXPORT
+rocsparse_status rocsparse_destroy_sddmm_descr(rocsparse_handle handle, rocsparse_sddmm_descr descr);
+
+  
+/*! \ingroup aux_module
    *  \brief Sparse matrix spmv.
    *
    *  \details

@@ -48,5 +48,6 @@
 #include "generic/rocsparse_spsv.h"
 #include "generic/rocsparse_spvv.h"
 #include "generic/rocsparse_v2_spmv.h"
+#include "generic/rocsparse_v2_sddmm.h"
 
 #endif // ROCSPARSE_GENERIC_H

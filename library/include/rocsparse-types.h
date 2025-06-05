@@ -235,6 +235,14 @@ typedef struct _rocsparse_extract_descr* rocsparse_extract_descr;
 typedef struct _rocsparse_spgeam_descr* rocsparse_spgeam_descr;
 
 /*! \ingroup types_module
+ * \brief rocsparse_sddmm_descr is a structure holding the rocsparse spmv
+ * descr data. It must be initialized using
+ * the rocsparse_create_sddmm_descr() routine. It should be destroyed at the
+ * end using rocsparse_destroy_sddmm_descr().
+ */
+typedef struct _rocsparse_sddmm_descr* rocsparse_sddmm_descr;
+
+/*! \ingroup types_module
  * \brief rocsparse_spmv_descr is a structure holding the rocsparse spmv
  * descr data. It must be initialized using
  * the rocsparse_create_spmv_descr() routine. It should be destroyed at the
@@ -849,6 +857,29 @@ typedef enum rocsparse_spmm_alg_
     rocsparse_spmm_alg_csr_nnz_split
     = rocsparse_spmm_alg_csr_merge /**< SpMM algorithm for CSR format using nnz split algorithm. */
 } rocsparse_spmm_alg;
+
+
+typedef enum rocsparse_sddmm_input_
+{
+    rocsparse_sddmm_input_alg, /**< Select algorithm for input on SDDMM descriptor. */
+    rocsparse_sddmm_input_operation_A, /**< Select matrix transpose operation for input matrix A on SDDMM descriptor. */
+    rocsparse_sddmm_input_operation_B, /**< Select matrix transpose operation for input matrix B on SDDMM descriptor. */
+    rocsparse_sddmm_input_scalar_datatype, /**< Select scalar  datatype for input on SDDMM descriptor. */
+    rocsparse_sddmm_input_compute_datatype /**< Select compute datatype for input on SDDMM descriptor. */
+} rocsparse_sddmm_input;
+
+
+/*! \ingroup types_module
+ *  \brief List of SDDMM stages.
+ *
+ *  \details
+ *  This is a list of possible stages during SDDMM computation.
+ */
+typedef enum rocsparse_sddmm_stage_
+{
+    rocsparse_ddmm_stage_analysis, /**< Analysis of the data. */
+    rocsparse_sddmm_stage_compute /**< Performs the actual SDDMM computation. */
+} rocsparse_sddmm_stage;
 
 /*! \ingroup types_module
  *  \brief List of sddmm algorithms.
