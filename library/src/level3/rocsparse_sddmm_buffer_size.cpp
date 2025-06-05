@@ -24,12 +24,13 @@
 #include <map>
 #include <sstream>
 
-#include "common.h"
-#include "control.h"
-#include "handle.h"
+#include "rocsparse_common.hpp"
+#include "rocsparse_control.hpp"
+#include "rocsparse_determine_indextype.hpp"
+#include "rocsparse_handle.hpp"
 #include "internal/generic/rocsparse_sddmm.h"
-#include "to_string.hpp"
-#include "utility.h"
+#include "rocsparse_enum_utils.hpp"
+#include "rocsparse_utility.hpp"
 
 #include "rocsparse_sddmm.hpp"
 
@@ -313,12 +314,12 @@ namespace rocsparse
         {
             std::stringstream sstr;
             sstr << "invalid precision configuration: "
-                 << "compute_type: " << rocsparse::to_string(compute_type_)
-                 << ", i_type: " << rocsparse::to_string(i_type_)
-                 << ", j_type: " << rocsparse::to_string(j_type_)
-                 << ", a_type: " << rocsparse::to_string(a_type_)
-                 << ", b_type: " << rocsparse::to_string(b_type_)
-                 << ", c_type: " << rocsparse::to_string(c_type_);
+                 << "compute_type: " << rocsparse::enum_utils::to_string(compute_type_)
+                 << ", i_type: " << rocsparse::enum_utils::to_string(i_type_)
+                 << ", j_type: " << rocsparse::enum_utils::to_string(j_type_)
+                 << ", a_type: " << rocsparse::enum_utils::to_string(a_type_)
+                 << ", b_type: " << rocsparse::enum_utils::to_string(b_type_)
+                 << ", c_type: " << rocsparse::enum_utils::to_string(c_type_);
 
             RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value,
                                                    sstr.str().c_str());
@@ -391,8 +392,8 @@ try
     RETURN_IF_ROCSPARSE_ERROR(
         rocsparse::sddmm_buffer_size_template_find(&sddmm_buffer_size_function,
                                                    compute_type,
-                                                   rocsparse::determine_I_index_type(mat_C),
-                                                   rocsparse::determine_J_index_type(mat_C),
+                                                   rocsparse::determine_I_indextype(mat_C),
+                                                   rocsparse::determine_J_indextype(mat_C),
                                                    mat_A->data_type,
                                                    mat_B->data_type,
                                                    mat_C->data_type));
