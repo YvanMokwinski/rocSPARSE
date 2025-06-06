@@ -418,3 +418,23 @@ catch(...)
     RETURN_ROCSPARSE_EXCEPTION();
 }
 // LCOV_EXCL_STOP
+
+
+#if 0
+
+extern "C" rocsparse_status rocsparse_v2_sddmm_buffer_size(rocsparse_handle            handle, // 0
+							   rocsparse_sddmm_descr       sddmm_descr, // 1
+							   rocsparse_const_dnmat_descr A, // 2
+							   rocsparse_const_dnmat_descr B, // 3
+							   rocsparse_spmat_descr       C, // 4
+							   size_t*  		       buffer_size_in_bytes) // 5
+  try
+    {
+      
+    }
+  catch(...)
+    {
+      
+    }
+
+#endif

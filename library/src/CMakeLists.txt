@@ -364,6 +364,7 @@ set(rocsparse_source
   src/level3/rocsparse_sddmm_csr.cpp
   src/level3/rocsparse_sddmm_csc.cpp
   src/level3/rocsparse_sddmm_ell.cpp
+  src/level3/rocsparse_v2_sddmm.cpp
   src/level3/rocsparse_spsm.cpp
 
 # Extra

@@ -456,3 +456,97 @@ catch(...)
     RETURN_ROCSPARSE_EXCEPTION();
 }
 // LCOV_EXCL_STOP
+
+
+#if 0
+extern "C" rocsparse_status rocsparse_v2_sddmm(rocsparse_handle            handle, // 0
+					       rocsparse_sddmm_descr       sddmm_descr, // 1
+					       const void*                 alpha, // 2
+					       rocsparse_const_dnmat_descr A, // 3
+					       rocsparse_const_dnmat_descr B, // 4
+					       const void*                 beta, // 5
+					       rocsparse_spmat_descr       C, // 6
+					       rocsparse_sddmm_stage       sddmm_stage, // 7
+					       size_t  		           buffer_size_in_bytes, // 8
+					       void*                       buffer) // 9
+  try
+    {      
+      ROCSPARSE_ROUTINE_TRACE;
+      
+      const rocsparse_operation operation_A = sddmm_descr->get_operation_A();
+      const rocsparse_operation operation_B = sddmm_descr->get_operation_B();
+      
+      ROCSPARSE_CHECKARG_HANDLE(0, handle);
+      ROCSPARSE_CHECKARG_POINTER(1, sddmm_descr);
+      ROCSPARSE_CHECKARG_POINTER(3, A);
+      ROCSPARSE_CHECKARG(3, A, A->init == false, rocsparse_status_not_initialized);
+      
+      ROCSPARSE_CHECKARG_POINTER(4, B);
+      ROCSPARSE_CHECKARG(4, B, B->init == false, rocsparse_status_not_initialized);
+
+      ROCSPARSE_CHECKARG_POINTER(5, beta);
+      ROCSPARSE_CHECKARG_POINTER(6, C);
+      ROCSPARSE_CHECKARG(6, C, C->init == false, rocsparse_status_not_initialized);
+      
+      ROCSPARSE_CHECKARG(1,
+			 operation_A,
+			 (operation_A == rocsparse_operation_conjugate_transpose),
+			 rocsparse_status_not_implemented);
+      
+      ROCSPARSE_CHECKARG(2,
+			 operation_B,
+			 (operation_B == rocsparse_operation_conjugate_transpose),
+			 rocsparse_status_not_implemented);
+      
+      if(C->nnz == 0)
+	{
+	  return rocsparse_status_success;
+	}
+
+      switch(sddmm_stage)
+	{
+	  
+	case rocsparse_sddmm_stage_analysis:
+	  {
+	    break;
+	  }
+	  
+	case rocsparse_sddmm_stage_compute:
+	  {
+	    break;
+	  }
+	  
+	}
+      
+      rocsparse::sddmm_template_t sddmm_function;
+      RETURN_IF_ROCSPARSE_ERROR(rocsparse::sddmm_template_find(&sddmm_function,
+							       compute_type,
+							       rocsparse::determine_I_indextype(C),
+							       rocsparse::determine_J_indextype(C),
+							       A->data_type,
+							       B->data_type,
+							       C->data_type));
+      
+      RETURN_IF_ROCSPARSE_ERROR(sddmm_function(C->format,
+					       handle,
+					       trans_A,
+					       trans_B,
+					       alpha,
+					       A,
+					       B,
+					       beta,
+					       C,
+					       sddmm_descr->get_compute_type(),
+					       sddmm_descr->get_alg(),
+					       buffer));
+      
+      return rocsparse_status_success;
+      // LCOV_EXCL_START
+    }
+  catch(...)
+    {
+      RETURN_ROCSPARSE_EXCEPTION();
+    }
+// LCOV_EXCL_STOP
+
+#endif
