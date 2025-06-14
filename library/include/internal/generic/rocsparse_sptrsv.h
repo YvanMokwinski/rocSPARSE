@@ -32,8 +32,6 @@
 extern "C" {
 #endif
 
-/*...*/
-
 ROCSPARSE_EXPORT
 rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle,
                                               rocsparse_sptrsv_descr      sptrsv_descr,
@@ -41,13 +39,257 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
                                               rocsparse_sptrsv_stage      sptrsv_stage,
                                               size_t*                     buffer_size_in_bytes);
 
+/*! \ingroup generic_module
+*  \brief Sparse Triangular solve
+*
+*  \details
+*  \p rocsparse_sptrsv solves a triangular linear system of equations defined by a sparse \f$m \times m\f$ square matrix \f$op(A)\f$,
+*  such that
+*  \f[
+*    op(A) \cdot y = \alpha \cdot x,
+*  \f]
+*  with
+*  \f[
+*    op(A) = \left\{
+*    \begin{array}{ll}
+*        A,   & \text{if op == rocsparse_operation_none} \\
+*        A^T, & \text{if op == rocsparse_operation_transpose}
+*        A^H, & \text{if op == rocsparse_operation_conjugate_transpose}
+*    \end{array}
+*    \right.
+*  \f]
+*  and where \f$y\f$ is the dense solution vector and \f$x\f$ is the dense right-hand side vector.
+*
+*  Performing the above operation requires two stages, the stage \ref rocsparse_sptrsv_stage_analysis and the stage \ref rocsparse_sptrsv_stage_compute.
+*  The stage \ref rocsparse_sptrsv_stage_analysis is required to perform the stage \ref rocsparse_sptrsv_stage_compute and only need to be called once for a given sparse matrix \f$op(A)\f$ while the stage \ref rocsparse_sptrsv_stage_compute can be repeatedly used with different \f$x\f$ and \f$y\f$ vectors.
+*
+*  \p rocsparse_sptrsv supports the following
+*  data types for \f$op(A)\f$, \f$x\f$, \f$y\f$, and scalar \f$\alpha\f$:
+*
+*  \par Uniform Precisions:
+*  <table>
+*  <caption id="sptrsv_uniform">Uniform Precisions</caption>
+*  <tr><th>A / X / Y / scalar
+*  <tr><td>rocsparse_datatype_f32_r
+*  <tr><td>rocsparse_datatype_f64_r
+*  <tr><td>rocsparse_datatype_f32_c
+*  <tr><td>rocsparse_datatype_f64_c
+*  </table>
+*
+*  \note
+*  The sparse matrix formats currently supported are: \ref rocsparse_format_coo and \ref rocsparse_format_csr.
+*
+*  \note
+*  the \ref rocsparse_sptrsv_stage_compute stage is non blocking
+*  and executed asynchronously with respect to the host. It may return before the actual computation has finished.
+*  The \ref rocsparse_sptrsv_stage_preprocess stage is blocking with respect to the host.
+*
+*  \note
+*  Currently, only \p trans == \ref rocsparse_operation_none and \p trans == \ref rocsparse_operation_transpose is supported.
+*
+*  \note
+*  Only the \ref rocsparse_sptrsv_stage_compute stage
+*  support execution in a hipGraph context. The \ref rocsparse_sptrsv_stage_analysis stage does not support hipGraph.
+*
+*  @param[in]
+*  handle       handle to the rocsparse library context queue.
+*  @param[in]
+*  sptrsv_descr descriptor of the routine.
+*  @param[in]
+*  alpha        scalar \f$\alpha\f$.
+*  @param[in]
+*  A            matrix descriptor.
+*  @param[in]
+*  x            vector descriptor.
+*  @param[inout]
+*  y            vector descriptor.
+*  @param[in]
+*  sptrsv_stage SpTRSV stage for the SpTRSV computation.
+*  @param[in]
+*  buffer_size_in_bytes  number of bytes of the buffer.
+*  @param[in]
+*  buffer       buffer allocated by the user.
+*
+*  \retval      rocsparse_status_success the operation completed successfully.
+*  \retval      rocsparse_status_invalid_handle the library context was not initialized.
+*  \retval      rocsparse_status_invalid_pointer \p sptrsv_descr, \p alpha, \p A, \p x, or \p y is invalid.
+*  \retval      rocsparse_status_invalid_value \p stage is invalid.
+*
+*  \par Example
+*  \code{.c}
+*   //     1 0 0 0
+*   // A = 4 2 0 0
+*   //     0 3 7 0
+*   //     0 0 0 1
+*   int m   = 4;
+*
+*   int hcsr_row_ptr[] = {0, 1, 3, 5, 6};
+*   int hcsr_col_ind[] = {0, 0, 1, 1, 2, 3};
+*   float hcsr_val[]   = {1, 4, 2, 3, 7, 1};
+*   float hx[] = {1.0f, 1.0f, 1.0f, 1.0f};
+*   float hy[] = {0.0f, 0.0f, 0.0f, 0.0f};
+*
+*   // Scalar alpha
+*   float alpha = 1.0f;
+*
+*   int nnz = hcsr_row_ptr[m] - hcsr_row_ptr[0];
+*
+*   // Offload data to device
+*   int* dcsr_row_ptr;
+*   int* dcsr_col_ind;
+*   float* dcsr_val;
+*   float* dx;
+*   float* dy;
+*   hipMalloc((void**)&dcsr_row_ptr, sizeof(int) * (m + 1));
+*   hipMalloc((void**)&dcsr_col_ind, sizeof(int) * nnz);
+*   hipMalloc((void**)&dcsr_val, sizeof(float) * nnz);
+*   hipMalloc((void**)&dx, sizeof(float) * m);
+*   hipMalloc((void**)&dy, sizeof(float) * m);
+*
+*   hipMemcpy(dcsr_row_ptr, hcsr_row_ptr.data(), sizeof(int) * (m + 1), hipMemcpyHostToDevice);
+*   hipMemcpy(dcsr_col_ind, hcsr_col_ind.data(), sizeof(int) * nnz, hipMemcpyHostToDevice);
+*   hipMemcpy(dcsr_val, hcsr_val.data(), sizeof(float) * nnz, hipMemcpyHostToDevice);
+*   hipMemcpy(dx, hx.data(), sizeof(float) * m, hipMemcpyHostToDevice);
+*
+*   rocsparse_handle     handle;
+*   rocsparse_spmat_descr A;
+*   rocsparse_dnvec_descr X;
+*   rocsparse_dnvec_descr Y;
+*
+*   const rocsparse_indextype row_indextype = rocsparse_indextype_i32;
+*   const rocsparse_indextype col_indextype = rocsparse_indextype_i32;
+*   const rocsparse_datatype  datatype = rocsparse_datatype_f32_r;
+*   const rocsparse_index_base idx_base = rocsparse_index_base_zero;
+*
+*   rocsparse_create_handle(&handle);
+*
+*   // Create sparse matrix A
+*   rocsparse_create_csr_descr(&A,
+*                              m,
+*                              m,
+*                              nnz,
+*                              dcsr_row_ptr,
+*                              dcsr_col_ind,
+*                              dcsr_val,
+*                              row_indextype,
+*                              col_indextype,
+*                              idx_base,
+*                              datatype);
+*
+*   rocsparse_create_dnvec_descr(&X,
+*                                m,
+*                                dx,
+*                                datatype);
+*
+*   rocsparse_create_dnvec_descr(&Y,
+*                                m,
+*                                dy,
+*                                datatype);
+*
+*   rocsparse_sptrsv_descr sptrsv_descr;
+*   rocsparse_create_sptrsv_descr(&sptrsv_descr);
+*
+*   const rocsparse_sptrsv_alg alg = rocsparse_sptrsv_alg_default;
+*   rocsparse_sptrsv_set_input(handle,
+*                              sptrsv_descr,
+*                              rocsparse_sptrsv_input_alg,
+*                              &alg,
+*                              sizeof(alg));
+*
+*   const rocsparse_operation op = rocsparse_operation_none;
+*   rocsparse_sptrsv_set_input(handle,
+*                              sptrsv_descr,
+*                              rocsparse_sptrsv_input_operation,
+*                              &op,
+*                              sizeof(op));
+*
+*   const rocsparse_datatype scalar_datatype = datatype;
+*   rocsparse_sptrsv_set_input(handle,
+*                              sptrsv_descr,
+*                              rocsparse_sptrsv_input_scalar_datatype,
+*                              &scalar_datatype,
+*                              sizeof(scalar_datatype));
+*
+*   const rocsparse_datatype compute_datatype = datatype;
+*   rocsparse_sptrsv_set_input(handle,
+*                              sptrsv_descr,
+*                              rocsparse_sptrsv_input_compute_datatype,
+*                              &compute_datatype,
+*                              sizeof(compute_datatype));
+*
+*   size_t buffer_size_in_bytes;
+*   rocsparse_sptrsv_buffer_size(handle,
+*                                sptrsv_descr,
+*                                A,
+*                                X,
+*                                Y,
+*                                rocsparse_spsv_stage_analysis,
+*                                &buffer_size_in_bytes);
+*
+*   void* buffer;
+*   hipMalloc(&buffer, buffer_size_in_bytes);
+*
+*   rocsparse_sptrsv(handle,
+*                    sptrsv_descr,
+*                    &alpha,
+*                    A,
+*                    X,
+*                    Y,
+*                    rocsparse_sptrsv_stage_analysis,
+*                    buffer_size_in_bytes,
+*                    buffer);
+*
+*   hipFree(buffer);
+*
+*   rocsparse_sptrsv_buffer_size(handle,
+*                                sptrsv_descr,
+*                                A,
+*                                X,
+*                                Y,
+*                                rocsparse_spsv_stage_analysis,
+*                                &buffer_size_in_bytes);
+*
+*   hipMalloc(&buffer, buffer_size_in_bytes);
+*
+*   rocsparse_sptrsv(handle,
+*                    sptrsv_descr,
+*                    &alpha,
+*                    A,
+*                    X,
+*                    Y,
+*                    rocsparse_sptrsv_stage_compute,
+*                    buffer_size_in_bytes,
+*                    buffer);
+*
+*   hipFree(buffer);
+*
+*   rocsparse_destroy_sptrsv_descr(sptrsv_descr);
+*
+*   // Copy result back to host
+*   hipMemcpy(hy.data(), dy, sizeof(float) * m, hipMemcpyDeviceToHost);
+*
+*   // Clear rocSPARSE
+*   rocsparse_destroy_spmat_descr(A);
+*   rocsparse_destroy_dnvec_descr(X);
+*   rocsparse_destroy_dnvec_descr(Y);
+*   rocsparse_destroy_handle(handle);
+*
+*   // Clear device memory
+*   hipFree(dcsr_row_ptr);
+*   hipFree(dcsr_col_ind);
+*   hipFree(dcsr_val);
+*   hipFree(dx);
+*   hipFree(dy);
+*   hipFree(temp_buffer);
+*  \endcode
+*/
 ROCSPARSE_EXPORT
 rocsparse_status rocsparse_sptrsv(rocsparse_handle            handle,
                                   rocsparse_sptrsv_descr      sptrsv_descr,
                                   const void*                 alpha,
-                                  rocsparse_const_spmat_descr spmat_descr,
-                                  rocsparse_const_dnvec_descr dnvec_descr_x,
-                                  const rocsparse_dnvec_descr dnvec_descr_y,
+                                  rocsparse_const_spmat_descr A,
+                                  rocsparse_const_dnvec_descr x,
+                                  rocsparse_dnvec_descr       y,
                                   rocsparse_sptrsv_stage      sptrsv_stage,
                                   size_t                      buffer_size_in_bytes,
                                   void*                       buffer);
@@ -56,4 +298,4 @@ rocsparse_status rocsparse_sptrsv(rocsparse_handle            handle,
 }
 #endif
 
-#endif /* ROCSPARSE_SPSV_H */
+#endif /* ROCSPARSE_SPTRSV_H */

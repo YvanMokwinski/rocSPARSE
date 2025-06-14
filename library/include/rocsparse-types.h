@@ -981,9 +981,8 @@ typedef enum rocsparse_sptrsv_input_
 {
     rocsparse_sptrsv_input_alg, /**< Select algorithm for input on SpTRSV descriptor. */
     rocsparse_sptrsv_input_operation, /**< Select matrix operation for input on SpTRSV descriptor. */
-    rocsparse_sptrsv_input_x_datatype, /**< Select X datatype for input on SpTRSV descriptor. */
-    rocsparse_sptrsv_input_y_datatype, /**< Select Y datatype for input on SpTRSV descriptor. */
-    rocsparse_sptrsv_input_scalar_datatype /**< Select scalar datatype for input on SpTRSV descriptor, this datatype is used as the compute type. */
+    rocsparse_sptrsv_input_scalar_datatype, /**< Select scalar datatype for input on SpTRSV descriptor. */
+    rocsparse_sptrsv_input_compute_datatype, /**< Select compute datatype for input on SpTRSV descriptor. */
 } rocsparse_sptrsv_input;
 
 /*! \ingroup types_module
