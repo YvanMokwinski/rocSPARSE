@@ -1,6 +1,6 @@
 /*! \file */
 /* ************************************************************************
- * Copyright (C) 2018-2024 Advanced Micro Devices, Inc. All rights Reserved.
+ * Copyright (C) 2018-2025 Advanced Micro Devices, Inc. All rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "rocsparse_common.hpp"
 
 extern "C" void __builtin_amdgcn_s_sleep(int);
 
@@ -285,7 +285,7 @@ namespace rocsparse
                                            int64_t x_inc,
                                            T* __restrict__ y,
                                            int* __restrict__ done_array,
-                                           J* __restrict__ map,
+                                           const J* __restrict__ map,
                                            int offset,
                                            J* __restrict__ zero_pivot,
                                            rocsparse_index_base idx_base,

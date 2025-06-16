@@ -175,7 +175,7 @@ namespace rocsparse
         RETURN_IF_HIP_ERROR(hipMemsetAsync(d_done_array, 0, sizeof(int) * m, stream));
 
         // Max nnz per row
-        rocsparse_int max_nnz = info->csrilu0_info->max_nnz;
+        const rocsparse_int max_nnz = info->csrilu0_info->get_max_nnz();
 
         // Determine gcnArch and ASIC revision
         const std::string gcn_arch_name = rocsparse::handle_get_arch_name(handle);
@@ -199,9 +199,9 @@ namespace rocsparse
                 csr_row_ptr,
                 csr_col_ind,
                 csr_val,
-                (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                 d_done_array,
-                (rocsparse_int*)info->csrilu0_info->row_map,
+                (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                 (rocsparse_int*)info->zero_pivot,
                 (rocsparse_int*)info->singular_pivot,
                 info->singular_tol,
@@ -229,9 +229,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -255,9 +255,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -281,9 +281,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -307,9 +307,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -333,9 +333,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -359,9 +359,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -388,9 +388,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -414,9 +414,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -440,9 +440,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -466,9 +466,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -492,9 +492,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -518,9 +518,9 @@ namespace rocsparse
                         csr_row_ptr,
                         csr_col_ind,
                         csr_val,
-                        (rocsparse_int*)info->csrilu0_info->trm_diag_ind,
+                        (const rocsparse_int*)info->csrilu0_info->get_diag_ind(),
                         d_done_array,
-                        (rocsparse_int*)info->csrilu0_info->row_map,
+                        (const rocsparse_int*)info->csrilu0_info->get_row_map(),
                         (rocsparse_int*)info->zero_pivot,
                         (rocsparse_int*)info->singular_pivot,
                         info->singular_tol,
@@ -825,7 +825,7 @@ try
     // If meta data is not shared, delete it
     if(!rocsparse::check_trm_shared(info, info->csrilu0_info))
     {
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::destroy_trm_info(info->csrilu0_info));
+        rocsparse::trm_info_t::destroy(info->csrilu0_info);
     }
 
     info->csrilu0_info = nullptr;
@@ -1106,7 +1106,7 @@ try
 }
 catch(...)
 {
-    return rocsparse::exception_to_rocsparse_status();
+    RETURN_ROCSPARSE_EXCEPTION();
 }
 // LCOV_EXCL_STOP
 
@@ -1130,7 +1130,7 @@ try
 }
 catch(...)
 {
-    return rocsparse::exception_to_rocsparse_status();
+    RETURN_ROCSPARSE_EXCEPTION();
 }
 // LCOV_EXCL_STOP
 
@@ -1154,6 +1154,6 @@ try
 }
 catch(...)
 {
-    return rocsparse::exception_to_rocsparse_status();
+    RETURN_ROCSPARSE_EXCEPTION();
 }
 // LCOV_EXCL_STOP

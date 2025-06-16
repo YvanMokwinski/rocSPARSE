@@ -24,11 +24,11 @@
 #include <map>
 #include <sstream>
 
-#include "control.h"
-#include "handle.h"
 #include "internal/generic/rocsparse_sptrsv.h"
-#include "to_string.hpp"
-#include "utility.h"
+#include "rocsparse_control.hpp"
+#include "rocsparse_enum_utils.hpp"
+#include "rocsparse_handle.hpp"
+#include "rocsparse_utility.hpp"
 
 #include "rocsparse_coosv.hpp"
 #include "rocsparse_csrsv.hpp"
@@ -67,9 +67,8 @@ inline bool rocsparse::enum_utils::is_invalid(rocsparse_sptrsv_input value)
     {
     case rocsparse_sptrsv_input_alg:
     case rocsparse_sptrsv_input_operation:
-    case rocsparse_sptrsv_input_x_datatype:
-    case rocsparse_sptrsv_input_y_datatype:
     case rocsparse_sptrsv_input_scalar_datatype:
+    case rocsparse_sptrsv_input_compute_datatype:
     {
         return false;
     }
@@ -97,8 +96,7 @@ protected:
     rocsparse_sptrsv_alg   m_alg;
     rocsparse_operation    m_operation;
     rocsparse_datatype     m_scalar_datatype;
-    rocsparse_datatype     m_x_datatype;
-    rocsparse_datatype     m_y_datatype;
+    rocsparse_datatype     m_compute_datatype;
     int64_t                m_zero_pivot_position;
 
 public:
@@ -109,8 +107,7 @@ public:
         , m_alg((rocsparse_sptrsv_alg)-1)
         , m_operation((rocsparse_operation)-1)
         , m_scalar_datatype((rocsparse_datatype)-1)
-        , m_x_datatype((rocsparse_datatype)-1)
-        , m_y_datatype((rocsparse_datatype)-1)
+        , m_compute_datatype((rocsparse_datatype)-1)
     {
     }
 
@@ -139,14 +136,9 @@ public:
         return this->m_scalar_datatype;
     }
 
-    rocsparse_datatype get_x_datatype() const
+    rocsparse_datatype get_compute_datatype() const
     {
-        return this->m_x_datatype;
-    }
-
-    rocsparse_datatype get_y_datatype() const
-    {
-        return this->m_y_datatype;
+        return this->m_compute_datatype;
     }
 
     void set_stage(rocsparse_sptrsv_stage value)
@@ -166,13 +158,9 @@ public:
     {
         this->m_scalar_datatype = value;
     }
-    void set_x_datatype(rocsparse_datatype value)
+    void set_compute_datatype(rocsparse_datatype value)
     {
-        this->m_x_datatype = value;
-    }
-    void set_y_datatype(rocsparse_datatype value)
-    {
-        this->m_y_datatype = value;
+        this->m_compute_datatype = value;
     }
 
     void set_zero_pivot_position(int64_t value)
@@ -247,25 +235,14 @@ try
         return rocsparse_status_success;
     }
 
-    case rocsparse_sptrsv_input_x_datatype:
+    case rocsparse_sptrsv_input_compute_datatype:
     {
         ROCSPARSE_CHECKARG(4,
                            data_size_in_bytes,
                            data_size_in_bytes != sizeof(rocsparse_datatype),
                            rocsparse_status_invalid_size);
         const rocsparse_datatype datatype = *reinterpret_cast<const rocsparse_datatype*>(data);
-        descr->set_x_datatype(datatype);
-        return rocsparse_status_success;
-    }
-
-    case rocsparse_sptrsv_input_y_datatype:
-    {
-        ROCSPARSE_CHECKARG(4,
-                           data_size_in_bytes,
-                           data_size_in_bytes != sizeof(rocsparse_datatype),
-                           rocsparse_status_invalid_size);
-        const rocsparse_datatype datatype = *reinterpret_cast<const rocsparse_datatype*>(data);
-        descr->set_y_datatype(datatype);
+        descr->set_compute_datatype(datatype);
         return rocsparse_status_success;
     }
 
@@ -639,6 +616,7 @@ try
                        (dnvec_descr_y->data_type != sptrsv_descr->get_scalar_datatype()),
                        rocsparse_status_not_implemented);
 
+#if 0
     ROCSPARSE_CHECKARG(4,
                        dnvec_descr_x,
                        (dnvec_descr_x->data_type != sptrsv_descr->get_x_datatype()),
@@ -647,6 +625,7 @@ try
                        dnvec_descr_y,
                        (dnvec_descr_y->data_type != sptrsv_descr->get_y_datatype()),
                        rocsparse_status_invalid_value);
+#endif
 
     RETURN_IF_ROCSPARSE_ERROR(rocsparse::sptrsv(handle,
                                                 sptrsv_descr,

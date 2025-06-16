@@ -42,7 +42,7 @@ def runTestCommand (platform, project, gfilter, boolean rocmExamples=false, Stri
     if (platform.jenkinsLabel.contains('gfx90a'))
     {
         hmmTestCommand = """
-                            HSA_XNACK=0 GTEST_LISTENER=NO_PASS_LINE_IN_LOG  ./rocsparse-test  --rocsparse-enable-debug --rocsparse-clients-enable-test-debug-arguments --gtest_output=xml:test_detail_hmm_xnack_off.xml --gtest_color=yes --gtest_filter=${gfilter}-*known_bug*
+                            HSA_XNACK=0 GTEST_LISTENER=NO_PASS_LINE_IN_LOG ./rocsparse-test --gtest_output=xml:test_detail_hmm_xnack_off.xml --gtest_color=yes --gtest_filter=${gfilter}-*known_bug*
                             HSA_XNACK=1 GTEST_LISTENER=NO_PASS_LINE_IN_LOG ./rocsparse-test --gtest_output=xml:test_detail_hmm_xnack_on.xml --gtest_color=yes --gtest_filter=${gfilter}-*known_bug*
                          """
     }
@@ -52,7 +52,7 @@ def runTestCommand (platform, project, gfilter, boolean rocmExamples=false, Stri
                 cd ${project.paths.project_build_prefix}/build/${dirmode}/clients/staging
                 export LD_LIBRARY_PATH=/opt/rocm/lib/
                 ${centos7Workaround}
-                GTEST_LISTENER=NO_PASS_LINE_IN_LOG ./rocsparse-test --rocsparse-enable-debug --rocsparse-clients-enable-test-debug-arguments --gtest_output=xml --gtest_color=yes --gtest_filter=${gfilter}-*known_bug*
+                GTEST_LISTENER=NO_PASS_LINE_IN_LOG ./rocsparse-test --gtest_output=xml --gtest_color=yes --gtest_filter=${gfilter}-*known_bug*
                 ${hmmTestCommand}
             """
 
@@ -82,7 +82,7 @@ def runTestCommand (platform, project, gfilter, boolean rocmExamples=false, Stri
                         ctest --output-on-failure
                     done
                 """
-        platform.runCommand(this, testCommand, "ROCM Examples")  
+        platform.runCommand(this, testCommand, "ROCM Examples")
 
     }
 }
@@ -98,7 +98,7 @@ def runTestWithSanitizerCommand (platform, project, gfilter, String dirmode = "r
 		        export ASAN_LIB_PATH=\$(/opt/rocm/llvm/bin/clang -print-file-name=libclang_rt.asan-x86_64.so)
                 export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$(dirname "\${ASAN_LIB_PATH}")
                 ${centos7Workaround}
-                GTEST_LISTENER=NO_PASS_LINE_IN_LOG ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=../../../../suppr.txt ./rocsparse-test --rocsparse-enable-debug --rocsparse-clients-enable-test-debug-arguments --gtest_output=xml --gtest_color=yes --gtest_filter=${gfilter}-*known_bug*
+                GTEST_LISTENER=NO_PASS_LINE_IN_LOG ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=../../../../suppr.txt ./rocsparse-test --gtest_output=xml --gtest_color=yes --gtest_filter=${gfilter}-*known_bug*
             """
 
     platform.runCommand(this, command)
@@ -106,26 +106,33 @@ def runTestWithSanitizerCommand (platform, project, gfilter, String dirmode = "r
 
 def runCoverageCommand (platform, project, gfilter, String dirmode = "release")
 {
-    //Temporary workaround due to bug in container
-    String centos7Workaround = platform.jenkinsLabel.contains('centos7') ? 'export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/lib64/' : ''
+    String commitSha
+    String repoUrl
+    (commitSha, repoUrl) = util.getGitHubCommitInformation(project.paths.project_src_prefix)
 
-    def command = """#!/usr/bin/env bash
-                set -x
-                cd ${project.paths.project_build_prefix}/build/${dirmode}
-                export LD_LIBRARY_PATH=/opt/rocm/lib/
-                ${centos7Workaround}
-                GTEST_LISTENER=NO_PASS_LINE_IN_LOG make coverage_cleanup coverage GTEST_FILTER=${gfilter}-*known_bug*
-            """
+    withCredentials([string(credentialsId: "mathlibs-codecov-token-rocsparse", variable: 'CODECOV_TOKEN')])
+    {
+        def command = """#!/usr/bin/env bash
+                    set -x
+                    cd ${project.paths.project_build_prefix}/build/${dirmode}
+                    export LD_LIBRARY_PATH=/opt/rocm/lib/
+                    GTEST_LISTENER=NO_PASS_LINE_IN_LOG make coverage_cleanup coverage GTEST_FILTER=${gfilter}-*known_bug*
+                    curl -Os https://uploader.codecov.io/latest/linux/codecov
+                    chmod +x codecov
+                    ./codecov -v -U \$http_proxy -t ${CODECOV_TOKEN} --file lcoverage/main_coverage.info --name rocSPARSE --sha ${commitSha}
+                """
 
-    platform.runCommand(this, command)
+        platform.runCommand(this, command)
 
-    publishHTML([allowMissing: false,
-                alwaysLinkToLastBuild: false,
-                keepAll: false,
-                reportDir: "${project.paths.project_build_prefix}/build/${dirmode}/lcoverage",
-                reportFiles: "index.html",
-                reportName: "Code coverage report",
-                reportTitles: "Code coverage report"])
+        publishHTML([allowMissing: false,
+                    alwaysLinkToLastBuild: false,
+                    keepAll: false,
+                    reportDir: "${project.paths.project_build_prefix}/build/${dirmode}/coverage-report",
+                    reportFiles: "index.html",
+                    reportName: "Code coverage report",
+                    reportTitles: "Code coverage report"])
+    }
+
 }
 
 def runPackageCommand(platform, project, String dirmode = "release")

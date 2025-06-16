@@ -21,12 +21,12 @@
  * THE SOFTWARE.
  *
  * ************************************************************************ */
-#include "common.h"
-#include "control.h"
 #include "internal/level2/rocsparse_csritsv.h"
+#include "rocsparse_common.hpp"
+#include "rocsparse_control.hpp"
 #include "rocsparse_csritsv.hpp"
 #include "rocsparse_csrmv.hpp"
-#include "utility.h"
+#include "rocsparse_utility.hpp"
 
 namespace rocsparse
 {
@@ -160,8 +160,8 @@ namespace rocsparse
         // Allocate buffer to hold zero pivot
         if(zero_pivot[0] == nullptr)
         {
-            RETURN_IF_HIP_ERROR(rocsparse_hipMallocAsync(
-                (void**)zero_pivot, sizeof(rocsparse_int), handle->stream));
+            RETURN_IF_HIP_ERROR(
+                rocsparse_hipMallocAsync(zero_pivot, sizeof(rocsparse_int), handle->stream));
         }
 
         // Initialize zero pivot
@@ -488,22 +488,25 @@ rocsparse_status rocsparse::csritsv_analysis_template(rocsparse_handle          
     //
     // Now, in case data are contiguous we can call csrmnv_analysis.
     //
-
     if(false == info->csritsv_info->is_submatrix)
     {
-        rocsparse_csrmv_info csrmv_info;
-        RETURN_IF_ROCSPARSE_ERROR(
-            (rocsparse::csrmv_analysis_template<I, J, T>(handle,
-                                                         trans,
-                                                         rocsparse::csrmv_alg_adaptive,
-                                                         m,
-                                                         m,
-                                                         nnz,
-                                                         descr,
-                                                         csr_val,
-                                                         csr_row_ptr,
-                                                         csr_col_ind,
-                                                         &csrmv_info)));
+        rocsparse_csrmv_info csrmv_info = info->csritsv_info->get_csrmv_info();
+        if(csrmv_info == nullptr)
+        {
+            RETURN_IF_ROCSPARSE_ERROR(
+                (rocsparse::csrmv_analysis_template<I, J, T>(handle,
+                                                             trans,
+                                                             rocsparse::csrmv_alg_adaptive,
+                                                             m,
+                                                             m,
+                                                             nnz,
+                                                             descr,
+                                                             csr_val,
+                                                             csr_row_ptr,
+                                                             csr_col_ind,
+                                                             &csrmv_info)));
+        }
+        info->csritsv_info->set_csrmv_info(csrmv_info);
     }
 
     return rocsparse_status_success;

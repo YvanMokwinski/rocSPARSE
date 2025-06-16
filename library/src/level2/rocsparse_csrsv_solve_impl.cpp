@@ -1,6 +1,6 @@
 /*! \file */
 /* ************************************************************************
- * Copyright (C) 2018-2025 Advanced Micro Devices, Inc. All rights Reserved.
+ * Copyright (C) 2025 Advanced Micro Devices, Inc. All rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,20 @@
  *
  * ************************************************************************ */
 
-#include "internal/level2/rocsparse_csrsv.h"
 #include "rocsparse_csrsv.hpp"
 
 #include "../level1/rocsparse_gthr.hpp"
-#include "control.h"
 #include "csrsv_device.h"
+#include "rocsparse_assign_async.hpp"
 #include "rocsparse_common.h"
-#include "utility.h"
+#include "rocsparse_control.hpp"
+#include "rocsparse_utility.hpp"
+
+#include "../level1/rocsparse_gthr.hpp"
+#include "csrsv_device.h"
+#include "internal/level2/rocsparse_csrsv.h"
+#include "rocsparse_csrsv.hpp"
+#include "rocsparse_trm_info.hpp"
 
 namespace rocsparse
 {
@@ -104,7 +110,7 @@ namespace rocsparse
         // Initialize buffers
         RETURN_IF_HIP_ERROR(hipMemsetAsync(done_array, 0, sizeof(int) * m, stream));
 
-        rocsparse_trm_info csrsv
+        rocsparse::trm_info_t* csrsv
             = (descr->fill_mode == rocsparse_fill_mode_upper)
                   ? ((trans == rocsparse_operation_none) ? info->csrsv_upper_info
                                                          : info->csrsvt_upper_info)
@@ -119,7 +125,7 @@ namespace rocsparse
         // If diag type is unit, re-initialize zero pivot to remove structural zeros
         if(descr->diag_type == rocsparse_diag_type_unit)
         {
-            RETURN_IF_HIP_ERROR(rocsparse::assign_async(
+            RETURN_IF_ROCSPARSE_ERROR(rocsparse::assign_async(
                 static_cast<J*>(info->zero_pivot), std::numeric_limits<J>::max(), stream));
         }
 
@@ -138,12 +144,13 @@ namespace rocsparse
             T* csrt_val = reinterpret_cast<T*>(ptr);
 
             // Gather values
-            RETURN_IF_ROCSPARSE_ERROR(rocsparse::gthr_template(handle,
-                                                               nnz,
-                                                               csr_val,
-                                                               csrt_val,
-                                                               (const I*)csrsv->trmt_perm,
-                                                               rocsparse_index_base_zero));
+            RETURN_IF_ROCSPARSE_ERROR(
+                rocsparse::gthr_template(handle,
+                                         nnz,
+                                         csr_val,
+                                         csrt_val,
+                                         (const I*)csrsv->get_transposed_perm(),
+                                         rocsparse_index_base_zero));
 
             if(trans == rocsparse_operation_conjugate_transpose)
             {
@@ -151,8 +158,8 @@ namespace rocsparse
                 RETURN_IF_ROCSPARSE_ERROR(rocsparse::conjugate(handle, nnz, csrt_val));
             }
 
-            local_csr_row_ptr = (const I*)csrsv->trmt_row_ptr;
-            local_csr_col_ind = (const J*)csrsv->trmt_col_ind;
+            local_csr_row_ptr = (const I*)csrsv->get_transposed_row_ptr();
+            local_csr_col_ind = (const J*)csrsv->get_transposed_col_ind();
             local_csr_val     = (const T*)csrt_val;
 
             fill_mode = (fill_mode == rocsparse_fill_mode_lower) ? rocsparse_fill_mode_upper
@@ -186,7 +193,7 @@ namespace rocsparse
                 x_inc,
                 y,
                 done_array,
-                (J*)csrsv->row_map,
+                (J*)csrsv->get_row_map(),
                 0,
                 (J*)info->zero_pivot,
                 descr->base,
@@ -216,7 +223,7 @@ namespace rocsparse
                     x_inc,
                     y,
                     done_array,
-                    (J*)csrsv->row_map,
+                    (J*)csrsv->get_row_map(),
                     0,
                     (J*)info->zero_pivot,
                     descr->base,
@@ -244,7 +251,7 @@ namespace rocsparse
                     x_inc,
                     y,
                     done_array,
-                    (J*)csrsv->row_map,
+                    (J*)csrsv->get_row_map(),
                     0,
                     (J*)info->zero_pivot,
                     descr->base,

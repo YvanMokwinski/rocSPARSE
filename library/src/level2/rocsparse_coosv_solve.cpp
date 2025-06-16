@@ -23,8 +23,8 @@
  * ************************************************************************ */
 
 #include "rocsparse_coosv.hpp"
-#include "to_string.hpp"
-#include "utility.h"
+#include "rocsparse_enum_utils.hpp"
+#include "rocsparse_utility.hpp"
 #include <map>
 #include <sstream>
 
@@ -80,8 +80,8 @@ namespace rocsparse
         {
 #ifndef NDEBUG
             std::cout << "invalid precision configuration: "
-                      << "i_type: " << rocsparse::to_string(i_type_) << std::endl
-                      << ", t_type: " << rocsparse::to_string(t_type_) << std::endl;
+                      << "i_type: " << rocsparse::enum_utils::to_string(i_type_) << std::endl
+                      << ", t_type: " << rocsparse::enum_utils::to_string(t_type_) << std::endl;
 
             std::cout << "available configuration are: " << std::endl;
             for(const auto& p : rocsparse::s_coosv_solve_dispatch)
@@ -91,15 +91,15 @@ namespace rocsparse
                 const auto  t_type = std::get<1>(t);
                 std::cout << std::endl
                           << std::endl
-                          << "i_type: " << rocsparse::to_string(i_type) << std::endl
-                          << ", t_type: " << rocsparse::to_string(t_type) << std::endl;
+                          << "i_type: " << rocsparse::enum_utils::to_string(i_type) << std::endl
+                          << ", t_type: " << rocsparse::enum_utils::to_string(t_type) << std::endl;
             }
 #endif
 
             std::stringstream sstr;
             sstr << "invalid precision configuration: "
-                 << "i_type: " << rocsparse::to_string(i_type_)
-                 << ", t_type: " << rocsparse::to_string(t_type_);
+                 << "i_type: " << rocsparse::enum_utils::to_string(i_type_)
+                 << ", t_type: " << rocsparse::enum_utils::to_string(t_type_);
 
             RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value,
                                                    sstr.str().c_str());

@@ -1,6 +1,6 @@
 /*! \file */
 /* ************************************************************************
- * Copyright (C) 2020-2024 Advanced Micro Devices, Inc. All rights Reserved.
+ * Copyright (C) 2020-2025 Advanced Micro Devices, Inc. All rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "rocsparse_common.hpp"
 
 namespace rocsparse
 {
@@ -39,7 +39,7 @@ namespace rocsparse
                                            T* __restrict__ B,
                                            int64_t ldb,
                                            int* __restrict__ done_array,
-                                           J* __restrict__ map,
+                                           const J* __restrict__ map,
                                            J* __restrict__ zero_pivot,
                                            rocsparse_index_base idx_base,
                                            rocsparse_fill_mode  fill_mode,

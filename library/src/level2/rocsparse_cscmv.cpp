@@ -23,16 +23,14 @@
  * ************************************************************************ */
 
 #include "rocsparse_cscmv.hpp"
-#include "to_string.hpp"
-#include "utility.h"
+#include "rocsparse_enum_utils.hpp"
+#include "rocsparse_utility.hpp"
 
 #include <map>
 #include <sstream>
 
 namespace rocsparse
-
 {
-
     typedef rocsparse_status (*cscmv_t)(rocsparse_handle,
                                         rocsparse_operation,
                                         rocsparse::csrmv_alg,
@@ -57,16 +55,16 @@ namespace rocsparse
                                    rocsparse_datatype,
                                    rocsparse_datatype>;
 
-#define CSCMV_CONFIG(T, I, J, A, X, Y)                                      \
-    {                                                                       \
-        cscmv_tuple(T, I, J, A, X, Y),                                      \
-            cscmv_template<typename rocsparse::datatype_traits<T>::type_t,  \
-                           typename rocsparse::indextype_traits<I>::type_t, \
-                           typename rocsparse::indextype_traits<J>::type_t, \
-                           typename rocsparse::datatype_traits<A>::type_t,  \
-                           typename rocsparse::datatype_traits<X>::type_t,  \
-                           typename rocsparse::datatype_traits<Y>::type_t>  \
-    }
+    // clang-format off
+#define CSCMV_CONFIG(T, I, J, A, X, Y)                               \
+    {cscmv_tuple(T, I, J, A, X, Y),                                  \
+     cscmv_template<typename rocsparse::datatype_traits<T>::type_t,  \
+                    typename rocsparse::indextype_traits<I>::type_t, \
+                    typename rocsparse::indextype_traits<J>::type_t, \
+                    typename rocsparse::datatype_traits<A>::type_t,  \
+                    typename rocsparse::datatype_traits<X>::type_t,  \
+                    typename rocsparse::datatype_traits<Y>::type_t>}
+    // clang-format on
 
     static const std::map<cscmv_tuple, cscmv_t> s_cscmv_dispatch{
         {CSCMV_CONFIG(rocsparse_datatype_f32_r,
@@ -195,6 +193,27 @@ namespace rocsparse
                       rocsparse_datatype_i8_r,
                       rocsparse_datatype_f32_r),
 
+         CSCMV_CONFIG(rocsparse_datatype_f32_r,
+                      rocsparse_indextype_i32,
+                      rocsparse_indextype_i32,
+                      rocsparse_datatype_f16_r,
+                      rocsparse_datatype_f16_r,
+                      rocsparse_datatype_f32_r),
+
+         CSCMV_CONFIG(rocsparse_datatype_f32_r,
+                      rocsparse_indextype_i64,
+                      rocsparse_indextype_i32,
+                      rocsparse_datatype_f16_r,
+                      rocsparse_datatype_f16_r,
+                      rocsparse_datatype_f32_r),
+
+         CSCMV_CONFIG(rocsparse_datatype_f32_r,
+                      rocsparse_indextype_i64,
+                      rocsparse_indextype_i64,
+                      rocsparse_datatype_f16_r,
+                      rocsparse_datatype_f16_r,
+                      rocsparse_datatype_f32_r),
+
          CSCMV_CONFIG(rocsparse_datatype_f32_c,
                       rocsparse_indextype_i32,
                       rocsparse_indextype_i32,
@@ -303,12 +322,12 @@ namespace rocsparse
 
 #ifndef NDEBUG
             std::cout << "invalid precision configuration: "
-                      << "t_type: " << rocsparse::to_string(t_type_) << std::endl
-                      << ", i_type: " << rocsparse::to_string(i_type_) << std::endl
-                      << ", j_type: " << rocsparse::to_string(j_type_) << std::endl
-                      << ", a_type: " << rocsparse::to_string(a_type_) << std::endl
-                      << ", x_type: " << rocsparse::to_string(x_type_) << std::endl
-                      << ", y_type: " << rocsparse::to_string(y_type_) << std::endl;
+                      << "t_type: " << rocsparse::enum_utils::to_string(t_type_) << std::endl
+                      << ", i_type: " << rocsparse::enum_utils::to_string(i_type_) << std::endl
+                      << ", j_type: " << rocsparse::enum_utils::to_string(j_type_) << std::endl
+                      << ", a_type: " << rocsparse::enum_utils::to_string(a_type_) << std::endl
+                      << ", x_type: " << rocsparse::enum_utils::to_string(x_type_) << std::endl
+                      << ", y_type: " << rocsparse::enum_utils::to_string(y_type_) << std::endl;
 
             std::cout << "available configuration are: " << std::endl;
             for(const auto& p : rocsparse::s_cscmv_dispatch)
@@ -322,23 +341,23 @@ namespace rocsparse
                 const auto  y_type = std::get<5>(t);
                 std::cout << std::endl
                           << std::endl
-                          << "t_type: " << rocsparse::to_string(t_type) << std::endl
-                          << ", i_type: " << rocsparse::to_string(i_type) << std::endl
-                          << ", j_type: " << rocsparse::to_string(j_type) << std::endl
-                          << ", a_type: " << rocsparse::to_string(a_type) << std::endl
-                          << ", x_type: " << rocsparse::to_string(x_type) << std::endl
-                          << ", y_type: " << rocsparse::to_string(y_type) << std::endl;
+                          << "t_type: " << rocsparse::enum_utils::to_string(t_type) << std::endl
+                          << ", i_type: " << rocsparse::enum_utils::to_string(i_type) << std::endl
+                          << ", j_type: " << rocsparse::enum_utils::to_string(j_type) << std::endl
+                          << ", a_type: " << rocsparse::enum_utils::to_string(a_type) << std::endl
+                          << ", x_type: " << rocsparse::enum_utils::to_string(x_type) << std::endl
+                          << ", y_type: " << rocsparse::enum_utils::to_string(y_type) << std::endl;
             }
 #endif
 
             std::stringstream sstr;
             sstr << "invalid precision configuration: "
-                 << "t_type: " << rocsparse::to_string(t_type_)
-                 << ", i_type: " << rocsparse::to_string(i_type_)
-                 << ", j_type: " << rocsparse::to_string(j_type_)
-                 << ", a_type: " << rocsparse::to_string(a_type_)
-                 << ", x_type: " << rocsparse::to_string(x_type_)
-                 << ", y_type: " << rocsparse::to_string(y_type_);
+                 << "t_type: " << rocsparse::enum_utils::to_string(t_type_)
+                 << ", i_type: " << rocsparse::enum_utils::to_string(i_type_)
+                 << ", j_type: " << rocsparse::enum_utils::to_string(j_type_)
+                 << ", a_type: " << rocsparse::enum_utils::to_string(a_type_)
+                 << ", x_type: " << rocsparse::enum_utils::to_string(x_type_)
+                 << ", y_type: " << rocsparse::enum_utils::to_string(y_type_);
 
             RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value,
                                                    sstr.str().c_str());

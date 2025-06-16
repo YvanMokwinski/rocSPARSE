@@ -26,9 +26,9 @@
 #include "rocsparse_common.h"
 #include "rocsparse_ellmv.hpp"
 
-#include "control.h"
 #include "ellmv_device.h"
-#include "utility.h"
+#include "rocsparse_control.hpp"
+#include "rocsparse_utility.hpp"
 
 namespace rocsparse
 {
@@ -310,6 +310,8 @@ INSTANTIATE_MIXED(int32_t, int32_t, int8_t, int8_t, int32_t);
 INSTANTIATE_MIXED(int32_t, int64_t, int8_t, int8_t, int32_t);
 INSTANTIATE_MIXED(float, int32_t, int8_t, int8_t, float);
 INSTANTIATE_MIXED(float, int64_t, int8_t, int8_t, float);
+INSTANTIATE_MIXED(float, int32_t, _Float16, _Float16, float);
+INSTANTIATE_MIXED(float, int64_t, _Float16, _Float16, float);
 INSTANTIATE_MIXED(
     rocsparse_float_complex, int32_t, float, rocsparse_float_complex, rocsparse_float_complex);
 INSTANTIATE_MIXED(

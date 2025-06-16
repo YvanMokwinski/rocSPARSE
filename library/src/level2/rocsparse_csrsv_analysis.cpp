@@ -23,8 +23,10 @@
  * ************************************************************************ */
 
 #include "rocsparse_csrsv.hpp"
-#include "to_string.hpp"
-#include "utility.h"
+
+#include "rocsparse_enum_utils.hpp"
+#include "rocsparse_utility.hpp"
+
 #include <map>
 #include <sstream>
 
@@ -87,6 +89,7 @@ namespace rocsparse
                                                 rocsparse_indextype j_type_,
                                                 rocsparse_datatype  t_type_)
     {
+
         const auto& it = rocsparse::s_csrsv_analysis_dispatch.find(
             rocsparse::csrsv_analysis_tuple(i_type_, j_type_, t_type_));
 
@@ -99,9 +102,9 @@ namespace rocsparse
         {
 #ifndef NDEBUG
             std::cout << "invalid precision configuration: "
-                      << "i_type: " << rocsparse::to_string(i_type_) << std::endl
-                      << ", j_type: " << rocsparse::to_string(j_type_) << std::endl
-                      << ", t_type: " << rocsparse::to_string(t_type_) << std::endl;
+                      << "i_type: " << rocsparse::enum_utils::to_string(i_type_) << std::endl
+                      << ", j_type: " << rocsparse::enum_utils::to_string(j_type_) << std::endl
+                      << ", t_type: " << rocsparse::enum_utils::to_string(t_type_) << std::endl;
 
             std::cout << "available configuration are: " << std::endl;
             for(const auto& p : rocsparse::s_csrsv_analysis_dispatch)
@@ -112,17 +115,17 @@ namespace rocsparse
                 const auto  t_type = std::get<2>(t);
                 std::cout << std::endl
                           << std::endl
-                          << "i_type: " << rocsparse::to_string(i_type) << std::endl
-                          << ", j_type: " << rocsparse::to_string(j_type) << std::endl
-                          << ", t_type: " << rocsparse::to_string(t_type) << std::endl;
+                          << "i_type: " << rocsparse::enum_utils::to_string(i_type) << std::endl
+                          << ", j_type: " << rocsparse::enum_utils::to_string(j_type) << std::endl
+                          << ", t_type: " << rocsparse::enum_utils::to_string(t_type) << std::endl;
             }
 #endif
 
             std::stringstream sstr;
             sstr << "invalid precision configuration: "
-                 << "i_type: " << rocsparse::to_string(i_type_)
-                 << ", j_type: " << rocsparse::to_string(j_type_)
-                 << ", t_type: " << rocsparse::to_string(t_type_);
+                 << "i_type: " << rocsparse::enum_utils::to_string(i_type_)
+                 << ", j_type: " << rocsparse::enum_utils::to_string(j_type_)
+                 << ", t_type: " << rocsparse::enum_utils::to_string(t_type_);
 
             RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value,
                                                    sstr.str().c_str());

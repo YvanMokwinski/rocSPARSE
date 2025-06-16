@@ -24,16 +24,79 @@
 #include <map>
 #include <sstream>
 
-#include "common.h"
-#include "control.h"
-#include "handle.h"
 #include "rocsparse.h"
 #include "rocsparse_common.h"
-#include "to_string.hpp"
-#include "utility.h"
+#include "rocsparse_common.hpp"
+#include "rocsparse_control.hpp"
+#include "rocsparse_determine_indextype.hpp"
+#include "rocsparse_enum_utils.hpp"
+#include "rocsparse_handle.hpp"
+#include "rocsparse_utility.hpp"
 
 #include "rocsparse_coosm.hpp"
 #include "rocsparse_csrsm.hpp"
+
+template <>
+const char* rocsparse::enum_utils::to_string(rocsparse_spsm_alg value_)
+{
+#define CASE(C) \
+    case C:     \
+        return #C
+    switch(value_)
+    {
+        CASE(rocsparse_spsm_alg_default);
+#undef CASE
+    }
+    // LCOV_EXCL_START
+    THROW_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value);
+    // LCOV_EXCL_STOP
+}
+
+template <>
+const char* rocsparse::enum_utils::to_string(rocsparse_spsm_stage value_)
+{
+#define CASE(C) \
+    case C:     \
+        return #C
+    switch(value_)
+    {
+        CASE(rocsparse_spsm_stage_buffer_size);
+        CASE(rocsparse_spsm_stage_preprocess);
+        CASE(rocsparse_spsm_stage_compute);
+#undef CASE
+    }
+    // LCOV_EXCL_START
+    THROW_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value);
+    // LCOV_EXCL_STOP
+}
+
+template <>
+bool rocsparse::enum_utils::is_invalid(rocsparse_spsm_alg value_)
+{
+    switch(value_)
+    {
+    case rocsparse_spsm_alg_default:
+    {
+        return false;
+    }
+    }
+    return true;
+}
+
+template <>
+bool rocsparse::enum_utils::is_invalid(rocsparse_spsm_stage value_)
+{
+    switch(value_)
+    {
+    case rocsparse_spsm_stage_buffer_size:
+    case rocsparse_spsm_stage_preprocess:
+    case rocsparse_spsm_stage_compute:
+    {
+        return false;
+    }
+    }
+    return true;
+}
 
 namespace rocsparse
 {
@@ -824,6 +887,98 @@ namespace rocsparse
         }
     }
 
+#if 0
+  typedef rocsparse_status (*spsm_template_t)(rocsparse_handle            handle,
+                                                rocsparse_operation         trans_A,
+                                                rocsparse_operation         trans_B,
+                                                const void*                 alpha,
+                                                rocsparse_const_spmat_descr matA,
+                                                rocsparse_const_dnmat_descr matB,
+                                                const rocsparse_dnmat_descr matC,
+                                                rocsparse_spsm_alg          alg,
+                                                rocsparse_spsm_stage        stage,
+                                                size_t*                     buffer_size,
+                                                void*                       temp_buffer);
+
+    using spsm_template_tuple
+        = std::tuple<rocsparse_datatype, rocsparse_indextype, rocsparse_indextype>;
+    // clang-format off
+#define SPSM_TEMPLATE_CONFIG(T_, I_, J_)                                    \
+    {                                                                       \
+        spsm_template_tuple(T_, I_, J_),                                    \
+            spsm_template<typename rocsparse::datatype_traits<T_>::type_t,  \
+                          typename rocsparse::indextype_traits<I_>::type_t, \
+                          typename rocsparse::indextype_traits<J_>::type_t> \
+    }
+    // clang-format on
+
+    static const std::map<spsm_template_tuple, spsm_template_t> s_spsm_template_dispatch{{
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f32_r, rocsparse_indextype_i32, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f32_r, rocsparse_indextype_i64, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f32_r, rocsparse_indextype_i64, rocsparse_indextype_i64),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f64_r, rocsparse_indextype_i32, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f64_r, rocsparse_indextype_i64, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f64_r, rocsparse_indextype_i64, rocsparse_indextype_i64),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f64_c, rocsparse_indextype_i32, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f64_c, rocsparse_indextype_i64, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f64_c, rocsparse_indextype_i64, rocsparse_indextype_i64),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f32_c, rocsparse_indextype_i32, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f32_c, rocsparse_indextype_i64, rocsparse_indextype_i32),
+
+        SPSM_TEMPLATE_CONFIG(
+            rocsparse_datatype_f32_c, rocsparse_indextype_i64, rocsparse_indextype_i64)}};
+
+    static rocsparse_status spsm_template_find(spsm_template_t*    spsm_function_,
+                                               rocsparse_datatype  compute_type_,
+                                               rocsparse_indextype i_type_,
+                                               rocsparse_indextype j_type_)
+    {
+        const auto& it = rocsparse::s_spsm_template_dispatch.find(
+            rocsparse::spsm_template_tuple(compute_type_, i_type_, j_type_));
+
+        if(it != rocsparse::s_spsm_template_dispatch.end())
+        {
+            spsm_function_[0] = it->second;
+        }
+        // LCOV_EXCL_START
+        else
+        {
+            std::stringstream sstr;
+            sstr << "invalid precision configuration: "
+                 << "compute_type: " << rocsparse::enum_utils::to_string(compute_type_)
+                 << ", i_type: " << rocsparse::enum_utils::to_string(i_type_)
+                 << ", j_type: " << rocsparse::enum_utils::to_string(j_type_);
+
+            RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value,
+                                                   sstr.str().c_str());
+        }
+        // LCOV_EXCL_STOP
+
+        return rocsparse_status_success;
+    }
+#endif
 }
 
 /*
@@ -886,6 +1041,16 @@ try
     }
 
     RETURN_IF_ROCSPARSE_ERROR(rocsparse::spsm(
+#if 0
+    rocsparse::spsm_template_t spsm_function;
+    RETURN_IF_ROCSPARSE_ERROR(
+        rocsparse::spsm_template_find(&spsm_function,
+                                      compute_type,
+                                      rocsparse::determine_I_indextype(matA),
+                                      rocsparse::determine_J_indextype(matA)));
+
+    RETURN_IF_ROCSPARSE_ERROR(spsm_function(
+#endif
         handle, trans_A, trans_B, alpha, matA, matB, matC, alg, stage, buffer_size, temp_buffer));
 
     return rocsparse_status_success;

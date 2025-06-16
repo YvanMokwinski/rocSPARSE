@@ -25,7 +25,7 @@
 #pragma once
 
 #include "rocsparse-types.h"
-#include "to_string.hpp"
+#include "rocsparse_enum_utils.hpp"
 
 namespace rocsparse
 {
@@ -68,8 +68,8 @@ namespace rocsparse
         {
             std::stringstream sstr;
             sstr << "invalid precision configuration: "
-                 << "source_datatype: " << rocsparse::to_string(source_datatype)
-                 << "target_datatype: " << rocsparse::to_string(target_datatype);
+                 << "source_datatype: " << rocsparse::enum_utils::to_string(source_datatype)
+                 << "target_datatype: " << rocsparse::enum_utils::to_string(target_datatype);
             RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value,
                                                    sstr.str().c_str());
         }
@@ -94,7 +94,7 @@ namespace rocsparse
 
     template <uint32_t BLOCKSIZE, typename F, typename... P>
     __launch_bounds__(BLOCKSIZE) __global__
-        inline void convert_device_scalars_kernel(F f, const void* source, void* target, P... p)
+        void convert_device_scalars_kernel(F f, const void* source, void* target, P... p)
     {
         const size_t tid = hipBlockIdx_x * BLOCKSIZE + hipThreadIdx_x;
         convert_device_scalars_kernel_device(f, tid, source, target, p...);
@@ -129,8 +129,8 @@ namespace rocsparse
         {
             std::stringstream sstr;
             sstr << "invalid precision configuration: "
-                 << "source_datatype: " << rocsparse::to_string(source_datatype)
-                 << "target_datatype: " << rocsparse::to_string(target_datatype);
+                 << "source_datatype: " << rocsparse::enum_utils::to_string(source_datatype)
+                 << "target_datatype: " << rocsparse::enum_utils::to_string(target_datatype);
             RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(rocsparse_status_invalid_value,
                                                    sstr.str().c_str());
         }

@@ -22,11 +22,11 @@
  *
  * ************************************************************************ */
 
-#include "common.h"
-#include "control.h"
 #include "internal/level2/rocsparse_csrmv.h"
 #include "rocsparse_common.h"
-#include "utility.h"
+#include "rocsparse_common.hpp"
+#include "rocsparse_control.hpp"
+#include "rocsparse_utility.hpp"
 
 #include "rocsparse_csrmv.hpp"
 
@@ -535,6 +535,9 @@ INSTANTIATE(rocsparse_double_complex, int64_t, int64_t);
 INSTANTIATE_MIXED_ANALYSIS(int32_t, int32_t, int8_t);
 INSTANTIATE_MIXED_ANALYSIS(int64_t, int32_t, int8_t);
 INSTANTIATE_MIXED_ANALYSIS(int64_t, int64_t, int8_t);
+INSTANTIATE_MIXED_ANALYSIS(int32_t, int32_t, _Float16);
+INSTANTIATE_MIXED_ANALYSIS(int64_t, int32_t, _Float16);
+INSTANTIATE_MIXED_ANALYSIS(int64_t, int64_t, _Float16);
 #undef INSTANTIATE_MIXED_ANALYSIS
 
 #define INSTANTIATE_MIXED(T, I, J, A, X, Y)                                \
@@ -564,6 +567,9 @@ INSTANTIATE_MIXED(int32_t, int64_t, int64_t, int8_t, int8_t, int32_t);
 INSTANTIATE_MIXED(float, int32_t, int32_t, int8_t, int8_t, float);
 INSTANTIATE_MIXED(float, int64_t, int32_t, int8_t, int8_t, float);
 INSTANTIATE_MIXED(float, int64_t, int64_t, int8_t, int8_t, float);
+INSTANTIATE_MIXED(float, int32_t, int32_t, _Float16, _Float16, float);
+INSTANTIATE_MIXED(float, int64_t, int32_t, _Float16, _Float16, float);
+INSTANTIATE_MIXED(float, int64_t, int64_t, _Float16, _Float16, float);
 INSTANTIATE_MIXED(rocsparse_float_complex,
                   int32_t,
                   int32_t,

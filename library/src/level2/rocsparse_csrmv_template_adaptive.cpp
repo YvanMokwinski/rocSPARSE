@@ -22,11 +22,11 @@
  *
  * ************************************************************************ */
 
-#include "common.h"
-#include "control.h"
 #include "rocsparse_common.h"
+#include "rocsparse_common.hpp"
+#include "rocsparse_control.hpp"
 #include "rocsparse_csrmv.hpp"
-#include "utility.h"
+#include "rocsparse_utility.hpp"
 
 #include "csrmv_device.h"
 #include "csrmv_symm_device.h"
@@ -415,14 +415,15 @@ rocsparse_status
         // Allocate memory on device to hold csrmv info, if required
         if(csrmv_info->adaptive.size > 0)
         {
-            RETURN_IF_HIP_ERROR(rocsparse_hipMallocAsync((void**)&csrmv_info->adaptive.row_blocks,
+
+            RETURN_IF_HIP_ERROR(rocsparse_hipMallocAsync(&csrmv_info->adaptive.row_blocks,
                                                          sizeof(I) * csrmv_info->adaptive.size,
                                                          handle->stream));
             RETURN_IF_HIP_ERROR(
-                rocsparse_hipMallocAsync((void**)&csrmv_info->adaptive.wg_flags,
+                rocsparse_hipMallocAsync(&csrmv_info->adaptive.wg_flags,
                                          sizeof(uint32_t) * csrmv_info->adaptive.size,
                                          handle->stream));
-            RETURN_IF_HIP_ERROR(rocsparse_hipMallocAsync((void**)&csrmv_info->adaptive.wg_ids,
+            RETURN_IF_HIP_ERROR(rocsparse_hipMallocAsync(&csrmv_info->adaptive.wg_ids,
                                                          sizeof(J) * csrmv_info->adaptive.size,
                                                          handle->stream));
 
@@ -777,6 +778,9 @@ INSTANTIATE(int64_t, int64_t, rocsparse_double_complex);
 INSTANTIATE(int32_t, int32_t, int8_t);
 INSTANTIATE(int64_t, int32_t, int8_t);
 INSTANTIATE(int64_t, int64_t, int8_t);
+INSTANTIATE(int32_t, int32_t, _Float16);
+INSTANTIATE(int64_t, int32_t, _Float16);
+INSTANTIATE(int64_t, int64_t, _Float16);
 
 #undef INSTANTIATE
 
@@ -849,6 +853,9 @@ INSTANTIATE(int32_t, int64_t, int64_t, int8_t, int8_t, int32_t);
 INSTANTIATE(float, int32_t, int32_t, int8_t, int8_t, float);
 INSTANTIATE(float, int64_t, int32_t, int8_t, int8_t, float);
 INSTANTIATE(float, int64_t, int64_t, int8_t, int8_t, float);
+INSTANTIATE(float, int32_t, int32_t, _Float16, _Float16, float);
+INSTANTIATE(float, int64_t, int32_t, _Float16, _Float16, float);
+INSTANTIATE(float, int64_t, int64_t, _Float16, _Float16, float);
 INSTANTIATE(rocsparse_float_complex,
             int32_t,
             int32_t,

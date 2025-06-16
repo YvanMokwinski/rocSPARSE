@@ -70,6 +70,16 @@ typedef struct ihipStream_t* hipStream_t;
 typedef struct _rocsparse_handle* rocsparse_handle;
 
 /*! \ingroup types_module
+ *  \brief Descriptor of the error.
+ *
+ *  \details
+ *  The rocSPARSE error descriptor is a structure holding the information related to an error
+ *  that occured during the execution of a rocSPARSE routine.
+ *  It should be destroyed using rocsparse_destroy_error().
+ */
+typedef struct _rocsparse_error* rocsparse_error;
+
+/*! \ingroup types_module
  *  \brief Descriptor of the matrix.
  *
  *  \details
@@ -1076,6 +1086,7 @@ typedef enum rocsparse_spgeam_stage_
 typedef enum rocsparse_spgeam_input_
 {
     rocsparse_spgeam_input_alg, /**< Select algorithm for input on SpGEAM descriptor. */
+    rocsparse_spgeam_input_scalar_datatype, /**< Select scalar data type for input on SpGEAM descriptor. */
     rocsparse_spgeam_input_compute_datatype, /**< Select compute data type for input on SpGEAM descriptor. */
     rocsparse_spgeam_input_operation_A, /**< Select A matrix transpose operation for input on SpGEAM descriptor. */
     rocsparse_spgeam_input_operation_B /**< Select B matrix transpose operation for input on SpGEAM descriptor. */

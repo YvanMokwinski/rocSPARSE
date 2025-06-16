@@ -29,8 +29,8 @@
 
 #include "csrgemm_numeric_device.h"
 
-#include "control.h"
-#include "utility.h"
+#include "rocsparse_control.hpp"
+#include "rocsparse_utility.hpp"
 
 namespace rocsparse
 {
@@ -348,8 +348,8 @@ namespace rocsparse
             if(mul)
             {
                 // Allocate additional buffer for C = alpha * A * B
-                RETURN_IF_HIP_ERROR(rocsparse_hipMallocAsync(
-                    (void**)&workspace_B, sizeof(I) * nnz_A, handle->stream));
+                RETURN_IF_HIP_ERROR(
+                    rocsparse_hipMallocAsync(&workspace_B, sizeof(I) * nnz_A, handle->stream));
             }
 
             if(handle->wavefront_size == 32)
@@ -437,7 +437,7 @@ namespace rocsparse
 #undef CSRGEMM_DIM
         }
 
-        ROCSPARSE_RETURN_STATUS(success);
+        return rocsparse_status_success;
     }
 }
 
@@ -824,7 +824,7 @@ rocsparse_status rocsparse::csrgemm_numeric_calc_template(rocsparse_handle    ha
         {
             // Allocate additional buffer for C = alpha * A * B
             RETURN_IF_HIP_ERROR(
-                rocsparse_hipMallocAsync((void**)&workspace_B, sizeof(I) * nnz_A, handle->stream));
+                rocsparse_hipMallocAsync(&workspace_B, sizeof(I) * nnz_A, handle->stream));
         }
 
         if(handle->wavefront_size == 32)
@@ -914,7 +914,7 @@ rocsparse_status rocsparse::csrgemm_numeric_calc_template(rocsparse_handle    ha
 #undef CSRGEMM_NUMERIC_LAUNCHER
     }
 
-    ROCSPARSE_RETURN_STATUS(success);
+    return rocsparse_status_success;
 }
 
 #define INSTANTIATE(I, J, T)                                            \

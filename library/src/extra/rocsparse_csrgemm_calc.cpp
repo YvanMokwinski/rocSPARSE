@@ -24,13 +24,13 @@
 
 #include "rocsparse_csrgemm_calc.hpp"
 #include "../conversion/rocsparse_identity.hpp"
-#include "control.h"
 #include "csrgemm_device.h"
 #include "internal/extra/rocsparse_csrgemm.h"
+#include "rocsparse_control.hpp"
 #include "rocsparse_csrgemm.hpp"
-#include "utility.h"
+#include "rocsparse_utility.hpp"
 
-#include "rocsparse_primitives.h"
+#include "rocsparse_primitives.hpp"
 
 namespace rocsparse
 {
@@ -774,7 +774,7 @@ rocsparse_status rocsparse::csrgemm_calc_template(rocsparse_handle          hand
         {
             // Allocate additional buffer for C = alpha * A * B
             RETURN_IF_HIP_ERROR(
-                rocsparse_hipMallocAsync((void**)&workspace_B, sizeof(I) * nnz_A, handle->stream));
+                rocsparse_hipMallocAsync(&workspace_B, sizeof(I) * nnz_A, handle->stream));
         }
 
 #define CSRGEMM_DIM 512

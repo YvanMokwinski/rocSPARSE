@@ -24,9 +24,9 @@
 #include "internal/level3/rocsparse_csrsm.h"
 #include "rocsparse_csrsm.hpp"
 
-#include "common.h"
-#include "control.h"
-#include "utility.h"
+#include "rocsparse_common.hpp"
+#include "rocsparse_control.hpp"
+#include "rocsparse_utility.hpp"
 
 #include "../level1/rocsparse_gthr.hpp"
 #include "../level2/rocsparse_csrsv.hpp"
@@ -131,11 +131,11 @@ try
     // Clear csrsm meta data (this includes lower, upper and their transposed equivalents
     if(!rocsparse::check_trm_shared(info, info->csrsm_lower_info))
     {
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::destroy_trm_info(info->csrsm_lower_info));
+        rocsparse::trm_info_t::destroy(info->csrsm_lower_info);
     }
     if(!rocsparse::check_trm_shared(info, info->csrsm_upper_info))
     {
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::destroy_trm_info(info->csrsm_upper_info));
+        rocsparse::trm_info_t::destroy(info->csrsm_upper_info);
     }
 
     info->csrsm_lower_info = nullptr;

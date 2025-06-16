@@ -22,10 +22,10 @@
  * ************************************************************************ */
 
 #include "internal/generic/rocsparse_sptrsm.h"
-#include "control.h"
-#include "handle.h"
-#include "to_string.hpp"
-#include "utility.h"
+#include "rocsparse_control.hpp"
+#include "rocsparse_enum_utils.hpp"
+#include "rocsparse_handle.hpp"
+#include "rocsparse_utility.hpp"
 
 #include "rocsparse_common.h"
 #include "rocsparse_coosm.hpp"
@@ -71,6 +71,7 @@ inline bool rocsparse::enum_utils::is_invalid(rocsparse_sptrsm_input value)
     case rocsparse_sptrsm_input_X_order:
     case rocsparse_sptrsm_input_Y_order:
     case rocsparse_sptrsm_input_scalar_datatype:
+    case rocsparse_sptrsm_input_nrhs:
     {
         return false;
     }
@@ -114,11 +115,11 @@ public:
         , m_alg((rocsparse_sptrsm_alg)-1)
         , m_operation((rocsparse_operation)-1)
         , m_X_operation((rocsparse_operation)-1)
-        , m_scalar_datatype((rocsparse_datatype)-1)
         , m_X_datatype((rocsparse_datatype)-1)
         , m_Y_datatype((rocsparse_datatype)-1)
         , m_X_order((rocsparse_order)-1)
         , m_Y_order((rocsparse_order)-1)
+        , m_scalar_datatype((rocsparse_datatype)-1)
         , m_nrhs(-1)
     {
     }
@@ -270,6 +271,10 @@ try
 
     switch(input)
     {
+    case rocsparse_sptrsm_input_nrhs:
+    {
+        break;
+    }
     case rocsparse_sptrsm_input_alg:
     {
         ROCSPARSE_CHECKARG(4,

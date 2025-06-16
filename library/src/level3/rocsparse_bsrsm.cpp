@@ -23,8 +23,8 @@
  * ************************************************************************ */
 
 #include "internal/level3/rocsparse_bsrsm.h"
-#include "control.h"
-#include "utility.h"
+#include "rocsparse_control.hpp"
+#include "rocsparse_utility.hpp"
 
 /*
  * ===========================================================================
@@ -133,11 +133,11 @@ try
     // Clear bsrsm meta data (this includes lower, upper and their transposed equivalents
     if(!rocsparse::check_trm_shared(info, info->bsrsm_lower_info))
     {
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::destroy_trm_info(info->bsrsm_lower_info));
+        rocsparse::trm_info_t::destroy(info->bsrsm_lower_info);
     }
     if(!rocsparse::check_trm_shared(info, info->bsrsm_upper_info))
     {
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::destroy_trm_info(info->bsrsm_upper_info));
+        rocsparse::trm_info_t::destroy(info->bsrsm_upper_info);
     }
 
     info->bsrsm_lower_info = nullptr;
