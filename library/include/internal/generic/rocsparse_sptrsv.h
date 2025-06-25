@@ -37,7 +37,8 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
                                               rocsparse_sptrsv_descr      sptrsv_descr,
                                               rocsparse_const_spmat_descr spmat_descr,
                                               rocsparse_sptrsv_stage      sptrsv_stage,
-                                              size_t*                     buffer_size_in_bytes);
+                                              size_t*                     buffer_size_in_bytes,
+                                              rocsparse_error*            p_error);
 
 /*! \ingroup generic_module
 *  \brief Sparse Triangular solve
@@ -194,28 +195,32 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
 *                              sptrsv_descr,
 *                              rocsparse_sptrsv_input_alg,
 *                              &alg,
-*                              sizeof(alg));
+*                              sizeof(alg),
+*                              nullptr);
 *
 *   const rocsparse_operation op = rocsparse_operation_none;
 *   rocsparse_sptrsv_set_input(handle,
 *                              sptrsv_descr,
 *                              rocsparse_sptrsv_input_operation,
 *                              &op,
-*                              sizeof(op));
+*                              sizeof(op),
+*                              nullptr);
 *
 *   const rocsparse_datatype scalar_datatype = datatype;
 *   rocsparse_sptrsv_set_input(handle,
 *                              sptrsv_descr,
 *                              rocsparse_sptrsv_input_scalar_datatype,
 *                              &scalar_datatype,
-*                              sizeof(scalar_datatype));
+*                              sizeof(scalar_datatype),
+*                              nullptr);
 *
 *   const rocsparse_datatype compute_datatype = datatype;
 *   rocsparse_sptrsv_set_input(handle,
 *                              sptrsv_descr,
 *                              rocsparse_sptrsv_input_compute_datatype,
 *                              &compute_datatype,
-*                              sizeof(compute_datatype));
+*                              sizeof(compute_datatype),
+*                              nullptr);
 *
 *   size_t buffer_size_in_bytes;
 *   rocsparse_sptrsv_buffer_size(handle,
@@ -224,7 +229,8 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
 *                                X,
 *                                Y,
 *                                rocsparse_spsv_stage_analysis,
-*                                &buffer_size_in_bytes);
+*                                &buffer_size_in_bytes,
+*                                nullptr);
 *
 *   void* buffer;
 *   hipMalloc(&buffer, buffer_size_in_bytes);
@@ -237,7 +243,8 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
 *                    Y,
 *                    rocsparse_sptrsv_stage_analysis,
 *                    buffer_size_in_bytes,
-*                    buffer);
+*                    buffer,
+*                    nullptr);
 *
 *   hipFree(buffer);
 *
@@ -247,7 +254,8 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
 *                                X,
 *                                Y,
 *                                rocsparse_spsv_stage_analysis,
-*                                &buffer_size_in_bytes);
+*                                &buffer_size_in_bytes,
+*                                nullptr);
 *
 *   hipMalloc(&buffer, buffer_size_in_bytes);
 *
@@ -259,7 +267,8 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
 *                    Y,
 *                    rocsparse_sptrsv_stage_compute,
 *                    buffer_size_in_bytes,
-*                    buffer);
+*                    buffer,
+*                    nullptr);
 *
 *   hipFree(buffer);
 *
@@ -273,6 +282,7 @@ rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle
 *   rocsparse_destroy_dnvec_descr(X);
 *   rocsparse_destroy_dnvec_descr(Y);
 *   rocsparse_destroy_handle(handle);
+*   rocsparse_destroy_error(error);
 *
 *   // Clear device memory
 *   hipFree(dcsr_row_ptr);
@@ -292,7 +302,8 @@ rocsparse_status rocsparse_sptrsv(rocsparse_handle            handle,
                                   rocsparse_dnvec_descr       y,
                                   rocsparse_sptrsv_stage      sptrsv_stage,
                                   size_t                      buffer_size_in_bytes,
-                                  void*                       buffer);
+                                  void*                       buffer,
+                                  rocsparse_error*            p_error);
 
 #ifdef __cplusplus
 }

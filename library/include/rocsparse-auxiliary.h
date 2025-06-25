@@ -1526,6 +1526,9 @@ rocsparse_status rocsparse_destroy_sptrsv_descr(rocsparse_sptrsv_descr descr);
  *  data        input data
  *  @param[in]
  *  data_size_in_bytes   input data size in bytes.
+ *  @param[out]
+ *  error        error descriptor created if the returned status is not \ref rocsparse_status_success. A null pointer can be passed if the user is not interested in obtaining an error descriptor.
+ *
  *
  *  \retval rocsparse_status_success the operation completed successfully.
  *  \retval rocsparse_status_invalid_pointer if \p descr or \p data is invalid.
@@ -1537,7 +1540,8 @@ rocsparse_status rocsparse_sptrsv_set_input(rocsparse_handle       handle,
                                             rocsparse_sptrsv_descr descr,
                                             rocsparse_sptrsv_input input,
                                             const void*            data,
-                                            size_t                 data_size_in_bytes);
+                                            size_t                 data_size_in_bytes,
+                                            rocsparse_error*       error);
 
 /*! \ingroup aux_module
  *  \brief Get the requested \ref rocsparse_sptrsv_output data from the SpTRSV descriptor
@@ -1552,6 +1556,8 @@ rocsparse_status rocsparse_sptrsv_set_input(rocsparse_handle       handle,
  *  data        output data
  *  @param[in]
  *  data_size   output data size in bytes.
+ *  @param[out]
+ *  error        error descriptor created if the returned status is not \ref rocsparse_status_success. A null pointer can be passed if the user is not interested in obtaining an error descriptor.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
  *  \retval rocsparse_status_invalid_pointer if \p descr or \p data is invalid.
@@ -1563,7 +1569,8 @@ rocsparse_status rocsparse_sptrsv_get_output(rocsparse_handle        handle,
                                              rocsparse_sptrsv_descr  descr,
                                              rocsparse_sptrsv_output output,
                                              void*                   data,
-                                             size_t                  data_size_in_bytes);
+                                             size_t                  data_size_in_bytes,
+                                             rocsparse_error*        error);
 
 /*! \ingroup aux_module
 *  \brief Sparse matrix sptrsm.
@@ -1608,6 +1615,8 @@ rocsparse_status rocsparse_destroy_sptrsm_descr(rocsparse_sptrsm_descr descr);
  *  data        input data
  *  @param[in]
  *  data_size   input data size.
+ *  @param[out]
+ *  error        error descriptor created if the returned status is not \ref rocsparse_status_success. A null pointer can be passed if the user is not interested in obtaining an error descriptor.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
  *  \retval rocsparse_status_invalid_pointer if \p descr or \p data is invalid.
@@ -1619,7 +1628,8 @@ rocsparse_status rocsparse_sptrsm_set_input(rocsparse_handle       handle,
                                             rocsparse_sptrsm_descr descr,
                                             rocsparse_sptrsm_input input,
                                             const void*            data,
-                                            size_t                 data_size);
+                                            size_t                 data_size,
+                                            rocsparse_error*       error);
 
 /*! \ingroup aux_module
  *  \brief Get the requested \ref rocsparse_sptrsm_output data from the SpTRSM descriptor
@@ -1634,6 +1644,8 @@ rocsparse_status rocsparse_sptrsm_set_input(rocsparse_handle       handle,
  *  data        output data
  *  @param[in]
  *  data_size   output data size in bytes.
+ *  @param[out]
+ *  error        error descriptor created if the returned status is not \ref rocsparse_status_success. A null pointer can be passed if the user is not interested in obtaining an error descriptor.
  *
  *  \retval rocsparse_status_success the operation completed successfully.
  *  \retval rocsparse_status_invalid_pointer if \p descr or \p data is invalid.
@@ -1645,7 +1657,8 @@ rocsparse_status rocsparse_sptrsm_get_output(rocsparse_handle        handle,
                                              rocsparse_sptrsm_descr  descr,
                                              rocsparse_sptrsm_output output,
                                              void*                   data,
-                                             size_t                  data_size_in_bytes);
+                                             size_t                  data_size_in_bytes,
+                                             rocsparse_error*        error);
 
 /*! \ingroup aux_module
  *  \brief Get the fields of the sparse COO matrix descriptor

@@ -27,6 +27,8 @@
 #include <fstream>
 #include <string>
 
+#include "rocsparse_handle.hpp"
+
 #if defined(ROCSPARSE_BUILT_WITH_ROCTX)
 #include <roctracer/roctx.h>
 #endif

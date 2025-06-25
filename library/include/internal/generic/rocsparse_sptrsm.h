@@ -37,7 +37,8 @@ rocsparse_status rocsparse_sptrsm_buffer_size(rocsparse_handle            handle
                                               rocsparse_sptrsm_descr      sptrsm_descr,
                                               rocsparse_const_spmat_descr const_spmat_A,
                                               rocsparse_sptrsm_stage      sptrsm_stage,
-                                              size_t*                     buffer_size_in_bytes);
+                                              size_t*                     buffer_size_in_bytes,
+                                              rocsparse_error*            error);
 
 ROCSPARSE_EXPORT
 rocsparse_status rocsparse_sptrsm(rocsparse_handle            handle,
@@ -48,7 +49,8 @@ rocsparse_status rocsparse_sptrsm(rocsparse_handle            handle,
                                   rocsparse_dnmat_descr       dnmat_Y,
                                   rocsparse_sptrsm_stage      sptrsm_stage,
                                   size_t                      buffer_size_in_bytes,
-                                  void*                       buffer);
+                                  void*                       buffer,
+                                  rocsparse_error*            error);
 
 #ifdef __cplusplus
 }

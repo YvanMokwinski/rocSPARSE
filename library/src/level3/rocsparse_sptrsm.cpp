@@ -30,6 +30,7 @@
 #include "rocsparse_common.h"
 #include "rocsparse_coosm.hpp"
 #include "rocsparse_csrsm.hpp"
+#include "rocsparse_sptrsm_descr.hpp"
 
 template <>
 inline bool rocsparse::enum_utils::is_invalid(rocsparse_sptrsm_stage value)
@@ -92,174 +93,12 @@ inline bool rocsparse::enum_utils::is_invalid(rocsparse_sptrsm_output value)
     return true;
 };
 
-struct _rocsparse_sptrsm_descr
-{
-protected:
-    rocsparse_sptrsm_stage m_stage;
-    rocsparse_sptrsm_alg   m_alg;
-    rocsparse_operation    m_operation;
-    rocsparse_operation    m_X_operation;
-    rocsparse_datatype     m_X_datatype;
-    rocsparse_datatype     m_Y_datatype;
-    rocsparse_order        m_X_order;
-    rocsparse_order        m_Y_order;
-    rocsparse_datatype     m_scalar_datatype;
-    int64_t                m_zero_pivot_position;
-    int64_t                m_nrhs;
-
-public:
-    ~_rocsparse_sptrsm_descr() = default;
-
-    _rocsparse_sptrsm_descr()
-        : m_stage((rocsparse_sptrsm_stage)-1)
-        , m_alg((rocsparse_sptrsm_alg)-1)
-        , m_operation((rocsparse_operation)-1)
-        , m_X_operation((rocsparse_operation)-1)
-        , m_X_datatype((rocsparse_datatype)-1)
-        , m_Y_datatype((rocsparse_datatype)-1)
-        , m_X_order((rocsparse_order)-1)
-        , m_Y_order((rocsparse_order)-1)
-        , m_scalar_datatype((rocsparse_datatype)-1)
-        , m_nrhs(-1)
-    {
-    }
-
-    int64_t get_zero_pivot_position() const
-    {
-        return this->m_zero_pivot_position;
-    }
-
-    rocsparse_sptrsm_stage get_stage() const
-    {
-        return this->m_stage;
-    }
-
-    rocsparse_sptrsm_alg get_alg() const
-    {
-        return this->m_alg;
-    }
-
-    int64_t get_nrhs() const
-    {
-        return this->m_nrhs;
-    }
-
-    rocsparse_operation get_operation() const
-    {
-        return this->m_operation;
-    }
-
-    rocsparse_operation get_X_operation() const
-    {
-        return this->m_X_operation;
-    }
-
-    rocsparse_datatype get_scalar_datatype() const
-    {
-        return this->m_scalar_datatype;
-    }
-
-    rocsparse_datatype get_X_datatype() const
-    {
-        return this->m_X_datatype;
-    }
-
-    rocsparse_datatype get_Y_datatype() const
-    {
-        return this->m_Y_datatype;
-    }
-
-    rocsparse_order get_X_order() const
-    {
-        return this->m_X_order;
-    }
-
-    rocsparse_order get_Y_order() const
-    {
-        return this->m_Y_order;
-    }
-
-    void set_stage(rocsparse_sptrsm_stage value)
-    {
-        this->m_stage = value;
-    }
-    void set_alg(rocsparse_sptrsm_alg value)
-    {
-        this->m_alg = value;
-    }
-
-    void set_operation(rocsparse_operation value)
-    {
-        this->m_operation = value;
-    }
-
-    void set_X_operation(rocsparse_operation value)
-    {
-        this->m_X_operation = value;
-    }
-
-    void set_scalar_datatype(rocsparse_datatype value)
-    {
-        this->m_scalar_datatype = value;
-    }
-
-    void set_X_datatype(rocsparse_datatype value)
-    {
-        this->m_X_datatype = value;
-    }
-    void set_Y_datatype(rocsparse_datatype value)
-    {
-        this->m_Y_datatype = value;
-    }
-
-    void set_X_order(rocsparse_order value)
-    {
-        this->m_X_order = value;
-    }
-    void set_Y_order(rocsparse_order value)
-    {
-        this->m_Y_order = value;
-    }
-
-    void set_zero_pivot_position(int64_t value)
-    {
-        this->m_zero_pivot_position = value;
-    }
-};
-
-extern "C" rocsparse_status rocsparse_create_sptrsm_descr(rocsparse_sptrsm_descr* descr)
-try
-{
-    ROCSPARSE_ROUTINE_TRACE;
-    ROCSPARSE_CHECKARG_POINTER(0, descr);
-    *descr = new _rocsparse_sptrsm_descr();
-    return rocsparse_status_success;
-}
-catch(...)
-{
-    RETURN_ROCSPARSE_EXCEPTION();
-}
-
-extern "C" rocsparse_status rocsparse_destroy_sptrsm_descr(rocsparse_sptrsm_descr descr)
-try
-{
-    ROCSPARSE_ROUTINE_TRACE;
-    if(descr != nullptr)
-    {
-        delete descr;
-    }
-    return rocsparse_status_success;
-}
-catch(...)
-{
-    RETURN_ROCSPARSE_EXCEPTION();
-}
-
 extern "C" rocsparse_status rocsparse_sptrsm_set_input(rocsparse_handle       handle,
                                                        rocsparse_sptrsm_descr descr,
                                                        rocsparse_sptrsm_input input,
                                                        const void*            data,
-                                                       size_t                 data_size_in_bytes)
+                                                       size_t                 data_size_in_bytes,
+                                                       rocsparse_error*       p_error)
 try
 {
     ROCSPARSE_ROUTINE_TRACE;
@@ -374,7 +213,8 @@ extern "C" rocsparse_status rocsparse_sptrsm_get_output(rocsparse_handle        
                                                         rocsparse_sptrsm_descr  descr,
                                                         rocsparse_sptrsm_output output,
                                                         void*                   data,
-                                                        size_t                  data_size_in_bytes)
+                                                        size_t                  data_size_in_bytes,
+                                                        rocsparse_error*        p_error)
 try
 {
     ROCSPARSE_ROUTINE_TRACE;
@@ -1290,7 +1130,8 @@ extern "C" rocsparse_status rocsparse_sptrsm_buffer_size(rocsparse_handle       
                                                          rocsparse_sptrsm_descr sptrsm_descr, // 1
                                                          rocsparse_const_spmat_descr A, // 2
                                                          rocsparse_sptrsm_stage sptrsm_stage, // 3
-                                                         size_t* buffer_size_in_bytes) // 4
+                                                         size_t*          buffer_size_in_bytes, // 4
+                                                         rocsparse_error* p_error)
 try
 {
     ROCSPARSE_ROUTINE_TRACE;
@@ -1320,7 +1161,8 @@ extern "C" rocsparse_status rocsparse_sptrsm(rocsparse_handle            handle,
                                              const rocsparse_dnmat_descr Y, // 5
                                              rocsparse_sptrsm_stage      sptrsm_stage, // 6
                                              size_t                      buffer_size_in_bytes, // 7
-                                             void*                       buffer) // 8
+                                             void*                       buffer, // 8
+                                             rocsparse_error*            p_error)
 try
 {
     ROCSPARSE_ROUTINE_TRACE;
