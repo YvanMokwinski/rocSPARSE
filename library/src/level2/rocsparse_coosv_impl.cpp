@@ -244,34 +244,35 @@ rocsparse_status rocsparse::coosv_analysis_template(rocsparse_handle          ha
     if(choose_i32)
     {
         const int32_t* csr_row_ptr = (const int32_t*)sorted_coo2csr_info->get_row_ptr();
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_analysis_template(handle,
-                                                                     trans,
-                                                                     m,
-                                                                     static_cast<int32_t>(nnz),
-                                                                     descr,
-                                                                     csr_val,
-                                                                     csr_row_ptr,
-                                                                     csr_col_ind,
-                                                                     info,
-                                                                     analysis,
-                                                                     solve,
-                                                                     temp_buffer));
+        RETURN_IF_ROCSPARSE_ERROR(
+            (rocsparse::csrsv_analysis_template<int32_t, I, T>(handle,
+                                                               trans,
+                                                               m,
+                                                               static_cast<int32_t>(nnz),
+                                                               descr,
+                                                               csr_val,
+                                                               csr_row_ptr,
+                                                               csr_col_ind,
+                                                               info,
+                                                               analysis,
+                                                               solve,
+                                                               temp_buffer)));
     }
     else
     {
         const int64_t* csr_row_ptr = (const int64_t*)sorted_coo2csr_info->get_row_ptr();
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_analysis_template(handle,
-                                                                     trans,
-                                                                     m,
-                                                                     nnz,
-                                                                     descr,
-                                                                     csr_val,
-                                                                     csr_row_ptr,
-                                                                     csr_col_ind,
-                                                                     info,
-                                                                     analysis,
-                                                                     solve,
-                                                                     temp_buffer));
+        RETURN_IF_ROCSPARSE_ERROR((rocsparse::csrsv_analysis_template<int64_t, I, T>(handle,
+                                                                                     trans,
+                                                                                     m,
+                                                                                     nnz,
+                                                                                     descr,
+                                                                                     csr_val,
+                                                                                     csr_row_ptr,
+                                                                                     csr_col_ind,
+                                                                                     info,
+                                                                                     analysis,
+                                                                                     solve,
+                                                                                     temp_buffer)));
     }
 
     return rocsparse_status_success;
@@ -401,40 +402,42 @@ rocsparse_status rocsparse::coosv_solve_template(rocsparse_handle          handl
     const bool  choose_i32  = nnz < std::numeric_limits<int32_t>::max();
     if(choose_i32)
     {
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve_template(handle,
-                                                                  trans,
-                                                                  m,
-                                                                  static_cast<int32_t>(nnz),
-                                                                  alpha_device_host,
-                                                                  descr,
-                                                                  csr_val,
-                                                                  (const int32_t*)csr_row_ptr,
-                                                                  csr_col_ind,
-                                                                  info,
-                                                                  x,
-                                                                  static_cast<int64_t>(1),
-                                                                  y,
-                                                                  policy,
-                                                                  temp_buffer));
+        RETURN_IF_ROCSPARSE_ERROR(
+            (rocsparse::csrsv_solve_template<int32_t, I, T>(handle,
+                                                            trans,
+                                                            m,
+                                                            static_cast<int32_t>(nnz),
+                                                            alpha_device_host,
+                                                            descr,
+                                                            csr_val,
+                                                            (const int32_t*)csr_row_ptr,
+                                                            csr_col_ind,
+                                                            info,
+                                                            x,
+                                                            static_cast<int64_t>(1),
+                                                            y,
+                                                            policy,
+                                                            temp_buffer)));
         return rocsparse_status_success;
     }
     else
     {
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve_template(handle,
-                                                                  trans,
-                                                                  m,
-                                                                  nnz,
-                                                                  alpha_device_host,
-                                                                  descr,
-                                                                  csr_val,
-                                                                  (const int64_t*)csr_row_ptr,
-                                                                  csr_col_ind,
-                                                                  info,
-                                                                  x,
-                                                                  static_cast<int64_t>(1),
-                                                                  y,
-                                                                  policy,
-                                                                  temp_buffer));
+        RETURN_IF_ROCSPARSE_ERROR(
+            (rocsparse::csrsv_solve_template<int64_t, I, T>(handle,
+                                                            trans,
+                                                            m,
+                                                            nnz,
+                                                            alpha_device_host,
+                                                            descr,
+                                                            csr_val,
+                                                            (const int64_t*)csr_row_ptr,
+                                                            csr_col_ind,
+                                                            info,
+                                                            x,
+                                                            static_cast<int64_t>(1),
+                                                            y,
+                                                            policy,
+                                                            temp_buffer)));
         return rocsparse_status_success;
     }
 }

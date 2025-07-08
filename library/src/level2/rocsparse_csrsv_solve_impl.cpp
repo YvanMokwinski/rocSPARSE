@@ -264,21 +264,30 @@ namespace rocsparse
 template <typename I, typename J, typename T>
 rocsparse_status rocsparse::csrsv_solve_template(rocsparse_handle          handle, //0
                                                  rocsparse_operation       trans, //1
-                                                 J                         m, //2
-                                                 I                         nnz, //3
-                                                 const T*                  alpha_device_host, //4
+                                                 int64_t                   m_, //2
+                                                 int64_t                   nnz_, //3
+                                                 const void*               alpha_device_host_, //4
                                                  const rocsparse_mat_descr descr, //5
-                                                 const T*                  csr_val, //6
-                                                 const I*                  csr_row_ptr, //7
-                                                 const J*                  csr_col_ind, //8
+                                                 const void*               csr_val_, //6
+                                                 const void*               csr_row_ptr_, //7
+                                                 const void*               csr_col_ind_, //8
                                                  rocsparse_mat_info        info, //9
-                                                 const T*                  x, //10
+                                                 const void*               x_, //10
                                                  int64_t                   x_inc, // non-classified
-                                                 T*                        y, //11
+                                                 void*                     y_, //11
                                                  rocsparse_solve_policy    policy, //12
                                                  void*                     temp_buffer) //13
 {
     ROCSPARSE_ROUTINE_TRACE;
+
+    const J  m                 = static_cast<J>(m_);
+    const I  nnz               = static_cast<I>(nnz_);
+    const T* alpha_device_host = reinterpret_cast<const T*>(alpha_device_host_);
+    const T* csr_val           = reinterpret_cast<const T*>(csr_val_);
+    const I* csr_row_ptr       = reinterpret_cast<const I*>(csr_row_ptr_);
+    const J* csr_col_ind       = reinterpret_cast<const J*>(csr_col_ind_);
+    const T* x                 = reinterpret_cast<const T*>(x_);
+    T*       y                 = reinterpret_cast<T*>(y_);
 
     // Check for valid handle and matrix descriptor
     ROCSPARSE_CHECKARG_HANDLE(0, handle);
@@ -292,15 +301,15 @@ rocsparse_status rocsparse::csrsv_solve_template(rocsparse_handle          handl
                          m,
                          nnz,
                          LOG_TRACE_SCALAR_VALUE(handle, alpha_device_host),
-                         (const void*&)descr,
-                         (const void*&)csr_val,
-                         (const void*&)csr_row_ptr,
-                         (const void*&)csr_col_ind,
-                         (const void*&)info,
-                         (const void*&)x,
-                         (const void*&)y,
+                         descr,
+                         csr_val,
+                         csr_row_ptr,
+                         csr_col_ind,
+                         info,
+                         x,
+                         y,
                          policy,
-                         (const void*&)temp_buffer);
+                         temp_buffer);
 
     ROCSPARSE_CHECKARG_ENUM(1, trans);
     ROCSPARSE_CHECKARG_ENUM(12, policy);
@@ -357,44 +366,40 @@ rocsparse_status rocsparse::csrsv_solve_template(rocsparse_handle          handl
     return rocsparse_status_success;
 }
 
-#define INSTANTIATE(ITYPE, JTYPE, TTYPE)                                            \
-    template rocsparse_status rocsparse::csrsv_solve_template<ITYPE, JTYPE, TTYPE>( \
-        rocsparse_handle          handle,                                           \
-        rocsparse_operation       trans,                                            \
-        JTYPE                     m,                                                \
-        ITYPE                     nnz,                                              \
-        const TTYPE*              alpha_device_host,                                \
-        const rocsparse_mat_descr descr,                                            \
-        const TTYPE*              csr_val,                                          \
-        const ITYPE*              csr_row_ptr,                                      \
-        const JTYPE*              csr_col_ind,                                      \
-        rocsparse_mat_info        info,                                             \
-        const TTYPE*              x,                                                \
-        int64_t                   x_inc,                                            \
-        TTYPE*                    y,                                                \
-        rocsparse_solve_policy    policy,                                           \
-        void*                     temp_buffer);
+#define INSTANTIATE(I, J, T)                                            \
+    template rocsparse_status rocsparse::csrsv_solve_template<I, J, T>( \
+        rocsparse_handle          handle,                               \
+        rocsparse_operation       trans,                                \
+        int64_t                   m,                                    \
+        int64_t                   nnz,                                  \
+        const void*               alpha_device_host,                    \
+        const rocsparse_mat_descr descr,                                \
+        const void*               csr_val,                              \
+        const void*               csr_row_ptr,                          \
+        const void*               csr_col_ind,                          \
+        rocsparse_mat_info        info,                                 \
+        const void*               x,                                    \
+        int64_t                   x_inc,                                \
+        void*                     y,                                    \
+        rocsparse_solve_policy    policy,                               \
+        void*                     temp_buffer)
 
 INSTANTIATE(int32_t, int32_t, float);
 INSTANTIATE(int32_t, int32_t, double);
 INSTANTIATE(int32_t, int32_t, rocsparse_float_complex);
 INSTANTIATE(int32_t, int32_t, rocsparse_double_complex);
-
 INSTANTIATE(int64_t, int32_t, float);
 INSTANTIATE(int64_t, int32_t, double);
 INSTANTIATE(int64_t, int32_t, rocsparse_float_complex);
 INSTANTIATE(int64_t, int32_t, rocsparse_double_complex);
-
 INSTANTIATE(int64_t, int64_t, float);
 INSTANTIATE(int64_t, int64_t, double);
 INSTANTIATE(int64_t, int64_t, rocsparse_float_complex);
 INSTANTIATE(int64_t, int64_t, rocsparse_double_complex);
-
 INSTANTIATE(int32_t, int64_t, float);
 INSTANTIATE(int32_t, int64_t, double);
 INSTANTIATE(int32_t, int64_t, rocsparse_float_complex);
 INSTANTIATE(int32_t, int64_t, rocsparse_double_complex);
-
 #undef INSTANTIATE
 
 /*
@@ -403,44 +408,46 @@ INSTANTIATE(int32_t, int64_t, rocsparse_double_complex);
  * ===========================================================================
  */
 
-#define C_IMPL(NAME, TYPE)                                                       \
-    extern "C" rocsparse_status NAME(rocsparse_handle          handle,           \
-                                     rocsparse_operation       trans,            \
-                                     rocsparse_int             m,                \
-                                     rocsparse_int             nnz,              \
-                                     const TYPE*               alpha,            \
-                                     const rocsparse_mat_descr descr,            \
-                                     const TYPE*               csr_val,          \
-                                     const rocsparse_int*      csr_row_ptr,      \
-                                     const rocsparse_int*      csr_col_ind,      \
-                                     rocsparse_mat_info        info,             \
-                                     const TYPE*               x,                \
-                                     TYPE*                     y,                \
-                                     rocsparse_solve_policy    policy,           \
-                                     void*                     temp_buffer)      \
-    try                                                                          \
-    {                                                                            \
-        ROCSPARSE_ROUTINE_TRACE;                                                 \
-        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve_template(handle,        \
-                                                                  trans,         \
-                                                                  m,             \
-                                                                  nnz,           \
-                                                                  alpha,         \
-                                                                  descr,         \
-                                                                  csr_val,       \
-                                                                  csr_row_ptr,   \
-                                                                  csr_col_ind,   \
-                                                                  info,          \
-                                                                  x,             \
-                                                                  (int64_t)1,    \
-                                                                  y,             \
-                                                                  policy,        \
-                                                                  temp_buffer)); \
-        return rocsparse_status_success;                                         \
-    }                                                                            \
-    catch(...)                                                                   \
-    {                                                                            \
-        RETURN_ROCSPARSE_EXCEPTION();                                            \
+#define C_IMPL(NAME, T)                                                        \
+    extern "C" rocsparse_status NAME(rocsparse_handle          handle,         \
+                                     rocsparse_operation       trans,          \
+                                     rocsparse_int             m,              \
+                                     rocsparse_int             nnz,            \
+                                     const T*                  alpha,          \
+                                     const rocsparse_mat_descr descr,          \
+                                     const T*                  csr_val,        \
+                                     const rocsparse_int*      csr_row_ptr,    \
+                                     const rocsparse_int*      csr_col_ind,    \
+                                     rocsparse_mat_info        info,           \
+                                     const T*                  x,              \
+                                     T*                        y,              \
+                                     rocsparse_solve_policy    policy,         \
+                                     void*                     temp_buffer)    \
+    try                                                                        \
+    {                                                                          \
+        ROCSPARSE_ROUTINE_TRACE;                                               \
+        RETURN_IF_ROCSPARSE_ERROR(                                             \
+            (rocsparse::csrsv_solve_template<rocsparse_int, rocsparse_int, T>( \
+                handle,                                                        \
+                trans,                                                         \
+                m,                                                             \
+                nnz,                                                           \
+                alpha,                                                         \
+                descr,                                                         \
+                csr_val,                                                       \
+                csr_row_ptr,                                                   \
+                csr_col_ind,                                                   \
+                info,                                                          \
+                x,                                                             \
+                static_cast<int64_t>(1),                                       \
+                y,                                                             \
+                policy,                                                        \
+                temp_buffer)));                                                \
+        return rocsparse_status_success;                                       \
+    }                                                                          \
+    catch(...)                                                                 \
+    {                                                                          \
+        RETURN_ROCSPARSE_EXCEPTION();                                          \
     }
 
 C_IMPL(rocsparse_scsrsv_solve, float);
