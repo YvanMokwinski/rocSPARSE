@@ -164,7 +164,6 @@ void testing_sptrsv_csr(const Arguments& arg)
                             &solve_pivot);
 
         const bool comparable = (analysis_pivot == -1 && solve_pivot == -1);
-
         CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_buffer_size(
             handle, sptrsv_descr, A, x, y, rocsparse_sptrsv_stage_compute, &buffer_size, p_error));
 
@@ -178,7 +177,7 @@ void testing_sptrsv_csr(const Arguments& arg)
         CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
                                                          sptrsv_descr,
                                                          rocsparse_sptrsv_input_scalar_alpha,
-                                                         halpha,
+                                                         halpha.data(),
                                                          sizeof(halpha.data()),
                                                          p_error));
 
@@ -196,7 +195,7 @@ void testing_sptrsv_csr(const Arguments& arg)
         {
             rocsparse_reproducibility::save("Y pointer mode host", dy);
         }
-
+        CHECK_HIP_ERROR(hipDeviceSynchronize());
         if(comparable)
         {
             hy.near_check(dy);
@@ -207,10 +206,11 @@ void testing_sptrsv_csr(const Arguments& arg)
         //
         CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_device));
 
+        std::cout << "dalpha  " << dalpha.data() << std::endl;
         CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
                                                          sptrsv_descr,
                                                          rocsparse_sptrsv_input_scalar_alpha,
-                                                         dalpha,
+                                                         dalpha.data(),
                                                          sizeof(dalpha.data()),
                                                          p_error));
 

@@ -325,14 +325,13 @@ namespace rocsparse
             }
             case rocsparse_sptrsv_stage_compute:
             {
-                rocsparse_float_complex  halpha   = 1;
                 const rocsparse_datatype datatype = spmat_descr->data_type;
                 RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve(handle,
                                                                  operation,
                                                                  spmat_descr->rows,
                                                                  spmat_descr->nnz,
                                                                  datatype,
-                                                                 &halpha,
+                                                                 alpha,
                                                                  spmat_descr->descr,
                                                                  datatype,
                                                                  spmat_descr->const_val_data,
@@ -343,7 +342,7 @@ namespace rocsparse
                                                                  spmat_descr->info,
                                                                  datatype,
                                                                  dnvec_descr_x->const_values,
-                                                                 (int64_t)1,
+                                                                 static_cast<int64_t>(1),
                                                                  datatype,
                                                                  dnvec_descr_y->values,
                                                                  rocsparse_solve_policy_auto,
