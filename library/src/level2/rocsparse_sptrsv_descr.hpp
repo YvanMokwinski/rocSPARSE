@@ -32,6 +32,7 @@ protected:
     rocsparse_datatype     m_scalar_datatype;
     rocsparse_datatype     m_compute_datatype;
     int64_t                m_zero_pivot_position;
+    const void*            m_scalar_alpha;
 
 public:
     ~_rocsparse_sptrsv_descr() = default;
@@ -46,6 +47,8 @@ public:
     void                   set_alg(rocsparse_sptrsv_alg value);
     void                   set_operation(rocsparse_operation value);
     void                   set_scalar_datatype(rocsparse_datatype value);
+    void                   set_scalar_alpha(const void* value);
     void                   set_compute_datatype(rocsparse_datatype value);
     void                   set_zero_pivot_position(int64_t value);
+    const void*            get_scalar_alpha() const;
 };

@@ -28,14 +28,15 @@
 _rocsparse_sptrsm_descr::_rocsparse_sptrsm_descr()
     : m_stage((rocsparse_sptrsm_stage)-1)
     , m_alg((rocsparse_sptrsm_alg)-1)
-    , m_operation((rocsparse_operation)-1)
-    , m_X_operation((rocsparse_operation)-1)
+    , m_operation_A((rocsparse_operation)-1)
+    , m_operation_X((rocsparse_operation)-1)
     , m_X_datatype((rocsparse_datatype)-1)
     , m_Y_datatype((rocsparse_datatype)-1)
     , m_X_order((rocsparse_order)-1)
     , m_Y_order((rocsparse_order)-1)
     , m_scalar_datatype((rocsparse_datatype)-1)
     , m_nrhs(-1)
+    , m_scalar_alpha(nullptr)
 {
 }
 
@@ -59,19 +60,24 @@ int64_t _rocsparse_sptrsm_descr::get_nrhs() const
     return this->m_nrhs;
 }
 
-rocsparse_operation _rocsparse_sptrsm_descr::get_operation() const
+rocsparse_operation _rocsparse_sptrsm_descr::get_operation_A() const
 {
-    return this->m_operation;
+    return this->m_operation_A;
 }
 
-rocsparse_operation _rocsparse_sptrsm_descr::get_X_operation() const
+rocsparse_operation _rocsparse_sptrsm_descr::get_operation_X() const
 {
-    return this->m_X_operation;
+    return this->m_operation_X;
 }
 
 rocsparse_datatype _rocsparse_sptrsm_descr::get_scalar_datatype() const
 {
     return this->m_scalar_datatype;
+}
+
+const void* _rocsparse_sptrsm_descr::get_scalar_alpha() const
+{
+    return this->m_scalar_alpha;
 }
 
 rocsparse_datatype _rocsparse_sptrsm_descr::get_X_datatype() const
@@ -104,19 +110,24 @@ void _rocsparse_sptrsm_descr::set_alg(rocsparse_sptrsm_alg value)
     this->m_alg = value;
 }
 
-void _rocsparse_sptrsm_descr::set_operation(rocsparse_operation value)
+void _rocsparse_sptrsm_descr::set_operation_A(rocsparse_operation value)
 {
-    this->m_operation = value;
+    this->m_operation_A = value;
 }
 
-void _rocsparse_sptrsm_descr::set_X_operation(rocsparse_operation value)
+void _rocsparse_sptrsm_descr::set_operation_X(rocsparse_operation value)
 {
-    this->m_X_operation = value;
+    this->m_operation_X = value;
 }
 
 void _rocsparse_sptrsm_descr::set_scalar_datatype(rocsparse_datatype value)
 {
     this->m_scalar_datatype = value;
+}
+
+void _rocsparse_sptrsm_descr::set_scalar_alpha(const void* value)
+{
+    this->m_scalar_alpha = value;
 }
 
 void _rocsparse_sptrsm_descr::set_X_datatype(rocsparse_datatype value)

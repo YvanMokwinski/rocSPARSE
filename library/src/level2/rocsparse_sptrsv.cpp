@@ -67,6 +67,7 @@ inline bool rocsparse::enum_utils::is_invalid(rocsparse_sptrsv_input value)
     switch(value)
     {
     case rocsparse_sptrsv_input_alg:
+    case rocsparse_sptrsv_input_scalar_alpha:
     case rocsparse_sptrsv_input_operation:
     case rocsparse_sptrsv_input_scalar_datatype:
     case rocsparse_sptrsv_input_compute_datatype:
@@ -126,6 +127,16 @@ try
                            rocsparse_status_invalid_size);
         const rocsparse_datatype datatype = *reinterpret_cast<const rocsparse_datatype*>(data);
         descr->set_scalar_datatype(datatype);
+        return rocsparse_status_success;
+    }
+
+    case rocsparse_sptrsv_input_scalar_alpha:
+    {
+        ROCSPARSE_CHECKARG(4,
+                           data_size_in_bytes,
+                           data_size_in_bytes != sizeof(const void*),
+                           rocsparse_status_invalid_size);
+        descr->set_scalar_alpha(data);
         return rocsparse_status_success;
     }
 
@@ -270,7 +281,6 @@ namespace rocsparse
 
     static rocsparse_status sptrsv(rocsparse_handle            handle,
                                    rocsparse_sptrsv_descr      sptrsv_descr,
-                                   const void*                 alpha,
                                    rocsparse_const_spmat_descr spmat_descr,
                                    rocsparse_const_dnvec_descr dnvec_descr_x,
                                    const rocsparse_dnvec_descr dnvec_descr_y,
@@ -281,6 +291,7 @@ namespace rocsparse
         ROCSPARSE_ROUTINE_TRACE;
         const rocsparse_format    format    = spmat_descr->format;
         const rocsparse_operation operation = sptrsv_descr->get_operation();
+        const void*               alpha     = sptrsv_descr->get_scalar_alpha();
         switch(format)
         {
         case rocsparse_format_csr:
@@ -314,13 +325,14 @@ namespace rocsparse
             }
             case rocsparse_sptrsv_stage_compute:
             {
+                rocsparse_float_complex  halpha   = 1;
                 const rocsparse_datatype datatype = spmat_descr->data_type;
                 RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve(handle,
                                                                  operation,
                                                                  spmat_descr->rows,
                                                                  spmat_descr->nnz,
                                                                  datatype,
-                                                                 alpha,
+                                                                 &halpha,
                                                                  spmat_descr->descr,
                                                                  datatype,
                                                                  spmat_descr->const_val_data,
@@ -432,6 +444,8 @@ namespace rocsparse
 extern "C" rocsparse_status rocsparse_sptrsv_buffer_size(rocsparse_handle            handle,
                                                          rocsparse_sptrsv_descr      sptrsv_descr,
                                                          rocsparse_const_spmat_descr spmat_descr,
+                                                         rocsparse_const_dnvec_descr x,
+                                                         rocsparse_const_dnvec_descr y,
                                                          rocsparse_sptrsv_stage      sptrsv_stage,
                                                          size_t*          buffer_size_in_bytes,
                                                          rocsparse_error* p_error)
@@ -457,83 +471,67 @@ catch(...)
 
 extern "C" rocsparse_status rocsparse_sptrsv(rocsparse_handle            handle, // 0
                                              rocsparse_sptrsv_descr      sptrsv_descr, // 1
-                                             const void*                 alpha, // 2
-                                             rocsparse_const_spmat_descr spmat_descr, // 3
-                                             rocsparse_const_dnvec_descr dnvec_descr_x, // 4
-                                             const rocsparse_dnvec_descr dnvec_descr_y, // 5
-                                             rocsparse_sptrsv_stage      sptrsv_stage, // 6
-                                             size_t                      buffer_size_in_bytes, // 7
-                                             void*                       buffer, // 8
+                                             rocsparse_const_spmat_descr spmat_descr, // 2
+                                             rocsparse_const_dnvec_descr dnvec_descr_x, // 3
+                                             const rocsparse_dnvec_descr dnvec_descr_y, // 4
+                                             rocsparse_sptrsv_stage      sptrsv_stage, // 5
+                                             size_t                      buffer_size_in_bytes, // 6
+                                             void*                       buffer, // 7
                                              rocsparse_error*            p_error)
 try
 {
     ROCSPARSE_ROUTINE_TRACE;
-
     ROCSPARSE_CHECKARG_HANDLE(0, handle);
     ROCSPARSE_CHECKARG_POINTER(1, sptrsv_descr);
-    ROCSPARSE_CHECKARG_POINTER(2, alpha);
-    ROCSPARSE_CHECKARG_POINTER(3, spmat_descr);
-    ROCSPARSE_CHECKARG_POINTER(4, dnvec_descr_x);
-    ROCSPARSE_CHECKARG_POINTER(5, dnvec_descr_y);
+    ROCSPARSE_CHECKARG_POINTER(2, spmat_descr);
+    ROCSPARSE_CHECKARG_POINTER(3, dnvec_descr_x);
+    ROCSPARSE_CHECKARG_POINTER(4, dnvec_descr_y);
 
-    ROCSPARSE_CHECKARG_ENUM(6, sptrsv_stage);
+    ROCSPARSE_CHECKARG_ENUM(5, sptrsv_stage);
 
-    ROCSPARSE_CHECKARG(7,
+    ROCSPARSE_CHECKARG(6,
                        buffer_size_in_bytes,
                        (buffer_size_in_bytes == 0) && (buffer != nullptr),
                        rocsparse_status_invalid_size);
 
-    ROCSPARSE_CHECKARG(8,
+    ROCSPARSE_CHECKARG(7,
                        buffer,
-                       (buffer == nullptr) && (buffer_size_in_bytes == 0),
+                       (buffer == nullptr) && (buffer_size_in_bytes != 0),
                        rocsparse_status_invalid_pointer);
 
     // Check if descriptors are initialized
     // Basically this never happens, but I let it here.
     // LCOV_EXCL_START
     ROCSPARSE_CHECKARG(
-        3, spmat_descr, (spmat_descr->init == false), rocsparse_status_not_initialized);
+        2, spmat_descr, (spmat_descr->init == false), rocsparse_status_not_initialized);
     ROCSPARSE_CHECKARG(
-        4, dnvec_descr_x, (dnvec_descr_x->init == false), rocsparse_status_not_initialized);
+        3, dnvec_descr_x, (dnvec_descr_x->init == false), rocsparse_status_not_initialized);
     ROCSPARSE_CHECKARG(
-        5, dnvec_descr_y, (dnvec_descr_y->init == false), rocsparse_status_not_initialized);
+        4, dnvec_descr_y, (dnvec_descr_y->init == false), rocsparse_status_not_initialized);
     // LCOV_EXCL_STOP
 
     // Check for matching types while we do not support mixed precision computation
-    ROCSPARSE_CHECKARG(3,
+    ROCSPARSE_CHECKARG(2,
                        spmat_descr,
                        (spmat_descr->data_type != sptrsv_descr->get_scalar_datatype()),
                        rocsparse_status_not_implemented);
-    ROCSPARSE_CHECKARG(4,
+    ROCSPARSE_CHECKARG(3,
                        dnvec_descr_x,
                        (dnvec_descr_x->data_type != sptrsv_descr->get_scalar_datatype()),
                        rocsparse_status_not_implemented);
-    ROCSPARSE_CHECKARG(5,
+    ROCSPARSE_CHECKARG(4,
                        dnvec_descr_y,
                        (dnvec_descr_y->data_type != sptrsv_descr->get_scalar_datatype()),
                        rocsparse_status_not_implemented);
 
-#if 0
-    ROCSPARSE_CHECKARG(4,
-                       dnvec_descr_x,
-                       (dnvec_descr_x->data_type != sptrsv_descr->get_x_datatype()),
-                       rocsparse_status_invalid_value);
-    ROCSPARSE_CHECKARG(5,
-                       dnvec_descr_y,
-                       (dnvec_descr_y->data_type != sptrsv_descr->get_y_datatype()),
-                       rocsparse_status_invalid_value);
-#endif
-
     RETURN_IF_ROCSPARSE_ERROR(rocsparse::sptrsv(handle,
                                                 sptrsv_descr,
-                                                alpha,
                                                 spmat_descr,
                                                 dnvec_descr_x,
                                                 dnvec_descr_y,
                                                 sptrsv_stage,
                                                 buffer_size_in_bytes,
                                                 buffer));
-
     return rocsparse_status_success;
     // LCOV_EXCL_START
 }

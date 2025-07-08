@@ -65,14 +65,10 @@ inline bool rocsparse::enum_utils::is_invalid(rocsparse_sptrsm_input value)
     switch(value)
     {
     case rocsparse_sptrsm_input_alg:
-    case rocsparse_sptrsm_input_operation:
-    case rocsparse_sptrsm_input_X_operation:
-    case rocsparse_sptrsm_input_X_datatype:
-    case rocsparse_sptrsm_input_Y_datatype:
-    case rocsparse_sptrsm_input_X_order:
-    case rocsparse_sptrsm_input_Y_order:
+    case rocsparse_sptrsm_input_operation_A:
+    case rocsparse_sptrsm_input_operation_X:
     case rocsparse_sptrsm_input_scalar_datatype:
-    case rocsparse_sptrsm_input_nrhs:
+    case rocsparse_sptrsm_input_scalar_alpha:
     {
         return false;
     }
@@ -110,10 +106,6 @@ try
 
     switch(input)
     {
-    case rocsparse_sptrsm_input_nrhs:
-    {
-        break;
-    }
     case rocsparse_sptrsm_input_alg:
     {
         ROCSPARSE_CHECKARG(4,
@@ -122,6 +114,16 @@ try
                            rocsparse_status_invalid_size);
         const rocsparse_sptrsm_alg alg = *reinterpret_cast<const rocsparse_sptrsm_alg*>(data);
         descr->set_alg(alg);
+        return rocsparse_status_success;
+    }
+
+    case rocsparse_sptrsm_input_scalar_alpha:
+    {
+        ROCSPARSE_CHECKARG(4,
+                           data_size_in_bytes,
+                           data_size_in_bytes != sizeof(const void*),
+                           rocsparse_status_invalid_size);
+        descr->set_scalar_alpha(data);
         return rocsparse_status_success;
     }
 
@@ -136,69 +138,25 @@ try
         return rocsparse_status_success;
     }
 
-    case rocsparse_sptrsm_input_X_datatype:
-    {
-        ROCSPARSE_CHECKARG(4,
-                           data_size_in_bytes,
-                           data_size_in_bytes != sizeof(rocsparse_datatype),
-                           rocsparse_status_invalid_size);
-        const rocsparse_datatype datatype = *reinterpret_cast<const rocsparse_datatype*>(data);
-        descr->set_X_datatype(datatype);
-        return rocsparse_status_success;
-    }
-
-    case rocsparse_sptrsm_input_Y_datatype:
-    {
-        ROCSPARSE_CHECKARG(4,
-                           data_size_in_bytes,
-                           data_size_in_bytes != sizeof(rocsparse_datatype),
-                           rocsparse_status_invalid_size);
-        const rocsparse_datatype datatype = *reinterpret_cast<const rocsparse_datatype*>(data);
-        descr->set_Y_datatype(datatype);
-        return rocsparse_status_success;
-    }
-
-    case rocsparse_sptrsm_input_X_order:
-    {
-        ROCSPARSE_CHECKARG(4,
-                           data_size_in_bytes,
-                           data_size_in_bytes != sizeof(rocsparse_order),
-                           rocsparse_status_invalid_size);
-        const rocsparse_order order = *reinterpret_cast<const rocsparse_order*>(data);
-        descr->set_X_order(order);
-        return rocsparse_status_success;
-    }
-
-    case rocsparse_sptrsm_input_Y_order:
-    {
-        ROCSPARSE_CHECKARG(4,
-                           data_size_in_bytes,
-                           data_size_in_bytes != sizeof(rocsparse_order),
-                           rocsparse_status_invalid_size);
-        const rocsparse_order order = *reinterpret_cast<const rocsparse_order*>(data);
-        descr->set_Y_order(order);
-        return rocsparse_status_success;
-    }
-
-    case rocsparse_sptrsm_input_operation:
+    case rocsparse_sptrsm_input_operation_A:
     {
         ROCSPARSE_CHECKARG(4,
                            data_size_in_bytes,
                            data_size_in_bytes != sizeof(rocsparse_operation),
                            rocsparse_status_invalid_size);
         const rocsparse_operation op = *reinterpret_cast<const rocsparse_operation*>(data);
-        descr->set_operation(op);
+        descr->set_operation_A(op);
         return rocsparse_status_success;
     }
 
-    case rocsparse_sptrsm_input_X_operation:
+    case rocsparse_sptrsm_input_operation_X:
     {
         ROCSPARSE_CHECKARG(4,
                            data_size_in_bytes,
                            data_size_in_bytes != sizeof(rocsparse_operation),
                            rocsparse_status_invalid_size);
         const rocsparse_operation op = *reinterpret_cast<const rocsparse_operation*>(data);
-        descr->set_X_operation(op);
+        descr->set_operation_X(op);
         return rocsparse_status_success;
     }
     }
@@ -820,12 +778,12 @@ namespace rocsparse
     {
 
         ROCSPARSE_ROUTINE_TRACE;
-        const rocsparse_operation operation_X = sptrsm_descr->get_X_operation();
+        const rocsparse_operation operation_X = sptrsm_descr->get_operation_X();
 
         const rocsparse::sptrsm_case sptrsm_case = sptrsm_get_case(
             operation_X, sptrsm_descr->get_X_order(), sptrsm_descr->get_Y_order());
 
-        const rocsparse_operation operation      = sptrsm_descr->get_operation();
+        const rocsparse_operation operation      = sptrsm_descr->get_operation_A();
         const rocsparse_datatype  alpha_datatype = sptrsm_descr->get_scalar_datatype();
         const rocsparse_format    format         = A->format;
         const int64_t             nrhs           = sptrsm_descr->get_nrhs();
@@ -948,8 +906,8 @@ namespace rocsparse
                                    void*                       buffer)
     {
         ROCSPARSE_ROUTINE_TRACE;
-        const rocsparse_operation    operation      = sptrsm_descr->get_operation();
-        const rocsparse_operation    X_operation    = sptrsm_descr->get_X_operation();
+        const rocsparse_operation    operation      = sptrsm_descr->get_operation_A();
+        const rocsparse_operation    X_operation    = sptrsm_descr->get_operation_X();
         const rocsparse_datatype     alpha_datatype = A->data_type;
         const rocsparse::sptrsm_case sptrsm_case = sptrsm_get_case(X_operation, X->order, Y->order);
 
@@ -1129,8 +1087,10 @@ namespace rocsparse
 extern "C" rocsparse_status rocsparse_sptrsm_buffer_size(rocsparse_handle       handle, // 0
                                                          rocsparse_sptrsm_descr sptrsm_descr, // 1
                                                          rocsparse_const_spmat_descr A, // 2
-                                                         rocsparse_sptrsm_stage sptrsm_stage, // 3
-                                                         size_t*          buffer_size_in_bytes, // 4
+                                                         rocsparse_const_dnmat_descr X, // 3
+                                                         rocsparse_const_dnmat_descr Y, // 4
+                                                         rocsparse_sptrsm_stage sptrsm_stage, // 5
+                                                         size_t*          buffer_size_in_bytes, // 6
                                                          rocsparse_error* p_error)
 try
 {
@@ -1138,8 +1098,10 @@ try
     ROCSPARSE_CHECKARG_HANDLE(0, handle);
     ROCSPARSE_CHECKARG_POINTER(1, sptrsm_descr);
     ROCSPARSE_CHECKARG_POINTER(2, A);
-    ROCSPARSE_CHECKARG_ENUM(3, sptrsm_stage);
-    ROCSPARSE_CHECKARG_POINTER(4, buffer_size_in_bytes);
+    ROCSPARSE_CHECKARG_POINTER(3, X);
+    ROCSPARSE_CHECKARG_POINTER(4, Y);
+    ROCSPARSE_CHECKARG_ENUM(5, sptrsm_stage);
+    ROCSPARSE_CHECKARG_POINTER(6, buffer_size_in_bytes);
 
     RETURN_IF_ROCSPARSE_ERROR(
         rocsparse::sptrsm_buffer_size(handle, sptrsm_descr, A, sptrsm_stage, buffer_size_in_bytes));
@@ -1158,7 +1120,7 @@ extern "C" rocsparse_status rocsparse_sptrsm(rocsparse_handle            handle,
                                              const void*                 alpha, // 2
                                              rocsparse_const_spmat_descr A, // 3
                                              rocsparse_const_dnmat_descr X, // 4
-                                             const rocsparse_dnmat_descr Y, // 5
+                                             rocsparse_dnmat_descr       Y, // 5
                                              rocsparse_sptrsm_stage      sptrsm_stage, // 6
                                              size_t                      buffer_size_in_bytes, // 7
                                              void*                       buffer, // 8

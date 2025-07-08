@@ -78,6 +78,16 @@ void _rocsparse_sptrsv_descr::set_operation(rocsparse_operation value)
     this->m_operation = value;
 }
 
+const void* _rocsparse_sptrsv_descr::get_scalar_alpha() const
+{
+    return this->m_scalar_alpha;
+}
+
+void _rocsparse_sptrsv_descr::set_scalar_alpha(const void* value)
+{
+    this->m_scalar_alpha = value;
+}
+
 void _rocsparse_sptrsv_descr::set_scalar_datatype(rocsparse_datatype value)
 {
     this->m_scalar_datatype = value;

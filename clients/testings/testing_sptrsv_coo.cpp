@@ -22,151 +22,91 @@
 * ************************************************************************ */
 
 #include "testing.hpp"
+/* ************************************************************************
+* Copyright (C) 2025 Advanced Micro Devices, Inc. All rights Reserved.
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in
+* all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+* THE SOFTWARE.
+*
+* ************************************************************************ */
+
+#include "testing.hpp"
 
 template <typename I, typename T>
 void testing_sptrsv_coo_bad_arg(const Arguments& arg)
 {
-    I        m           = 100;
-    I        n           = 100;
-    I        nnz         = 100;
-    const T  local_alpha = T(0.6);
-    const T* alpha       = &local_alpha;
-
-    rocsparse_operation  trans = rocsparse_operation_none;
-    rocsparse_index_base base  = rocsparse_index_base_zero;
-    rocsparse_spsv_alg   alg   = rocsparse_spsv_alg_default;
-
-    // Index and data type
-    rocsparse_indextype itype        = get_indextype<I>();
-    rocsparse_datatype  compute_type = get_datatype<T>();
-
-    // Create rocsparse handle
-    rocsparse_local_handle local_handle;
-
-    // SpSV structures
-    rocsparse_local_spmat local_A(
-        m, n, nnz, (void*)0x4, (void*)0x4, (void*)0x4, itype, base, compute_type);
-    rocsparse_local_dnvec local_x(m, (void*)0x4, compute_type);
-    rocsparse_local_dnvec local_y(m, (void*)0x4, compute_type);
-
-    int       nargs_to_exclude   = 2;
-    const int args_to_exclude[2] = {9, 10};
-
-    rocsparse_handle      handle = local_handle;
-    rocsparse_spmat_descr mat    = local_A;
-    rocsparse_dnvec_descr x      = local_x;
-    rocsparse_dnvec_descr y      = local_y;
-
-    size_t  local_buffer_size = 100;
-    size_t* buffer_size       = &local_buffer_size;
-    void*   temp_buffer       = (void*)0x4;
-
-    rocsparse_spsv_stage stage;
-
-#define PARAMS_BUFFER_SIZE \
-    handle, trans, alpha, mat, x, y, compute_type, alg, stage, buffer_size, temp_buffer
-
-#define PARAMS_ANALYSIS \
-    handle, trans, alpha, mat, x, y, compute_type, alg, stage, buffer_size, temp_buffer
-
-#define PARAMS_SOLVE \
-    handle, trans, alpha, mat, x, y, compute_type, alg, stage, buffer_size, temp_buffer
-
-    stage = rocsparse_spsv_stage_buffer_size;
-    select_bad_arg_analysis(rocsparse_spsv, nargs_to_exclude, args_to_exclude, PARAMS_BUFFER_SIZE);
-
-    stage = rocsparse_spsv_stage_preprocess;
-    select_bad_arg_analysis(rocsparse_spsv, nargs_to_exclude, args_to_exclude, PARAMS_ANALYSIS);
-
-    stage = rocsparse_spsv_stage_compute;
-    select_bad_arg_analysis(rocsparse_spsv, nargs_to_exclude, args_to_exclude, PARAMS_SOLVE);
-
-#undef PARAMS_BUFFER_SIZE
-#undef PARAMS_ANALYSIS
-#undef PARAMS_SOLVE
 }
 
 template <typename I, typename T>
 void testing_sptrsv_coo(const Arguments& arg)
 {
-    I                     M           = arg.M;
-    I                     N           = arg.N;
-    rocsparse_operation   trans_A     = arg.transA;
-    rocsparse_index_base  base        = arg.baseA;
-    rocsparse_spsv_alg    alg         = arg.spsv_alg;
-    rocsparse_diag_type   diag        = arg.diag;
-    rocsparse_fill_mode   uplo        = arg.uplo;
-    rocsparse_matrix_type matrix_type = arg.matrix_type;
-
-    rocsparse_spsv_stage buffersize = rocsparse_spsv_stage_buffer_size;
-    rocsparse_spsv_stage preprocess = rocsparse_spsv_stage_preprocess;
-    rocsparse_spsv_stage compute    = rocsparse_spsv_stage_compute;
-
-    T halpha = arg.get_alpha<T>();
-
-    // Index and data type
-    rocsparse_indextype itype = get_indextype<I>();
-    rocsparse_datatype  ttype = get_datatype<T>();
-
-    // Create rocsparse handle
-    rocsparse_local_handle handle(arg);
-
-    rocsparse_matrix_factory<T, I, I> matrix_factory(arg);
-
-    // Allocate host memory for matrix
-    host_vector<I> hcoo_row_ind;
-    host_vector<I> hcoo_col_ind;
-    host_vector<T> hcoo_val;
-
-    // Sample matrix
-    int64_t nnz_A;
-    matrix_factory.init_coo(hcoo_row_ind, hcoo_col_ind, hcoo_val, M, N, nnz_A, base);
-
-    // Non-squared matrices are not supported
-    if(M != N)
+    if(arg.M != arg.N)
     {
         return;
     }
 
-    // Allocate host memory for vectors
-    host_vector<T> hx(M);
-    host_vector<T> hy_1(M);
-    host_vector<T> hy_2(M);
-    host_vector<T> hy_gold(M);
+    const rocsparse_operation   trans_A     = arg.transA;
+    const rocsparse_index_base  base        = arg.baseA;
+    const rocsparse_sptrsv_alg  alg         = arg.sptrsv_alg;
+    const rocsparse_diag_type   diag        = arg.diag;
+    const rocsparse_fill_mode   uplo        = arg.uplo;
+    const rocsparse_matrix_type matrix_type = arg.matrix_type;
 
-    // Initialize data on CPU
+    //
+    // Create handle.
+    //
+    rocsparse_local_handle handle(arg);
+
+    //
+    // Create host matrix.
+    //
+    host_coo_matrix<T, I> hA;
+    {
+        rocsparse_matrix_factory<T, I, I> matrix_factory(arg);
+        matrix_factory.init_coo(hA);
+    }
+
+    const I M = hA.m;
+    if(M != hA.n)
+    {
+        return;
+    }
+
+    //
+    // Create host data.
+    //
+    host_scalar<T> halpha(arg.get_alpha<T>());
+
+    host_dense_vector<T> hx(M);
     rocsparse_init<T>(hx, M, 1, 1);
-    rocsparse_init<T>(hy_1, M, 1, 1);
-
-    hy_2    = hy_1;
-    hy_gold = hy_1;
-
-    // Allocate device memory
-    device_vector<I> dcoo_row_ind(nnz_A);
-    device_vector<I> dcoo_col_ind(nnz_A);
-    device_vector<T> dcoo_val(nnz_A);
-    device_vector<T> dx(M);
-    device_vector<T> dy_1(M);
-    device_vector<T> dy_2(M);
-    device_vector<T> dalpha(1);
-
-    // Copy data from CPU to device
-    CHECK_HIP_ERROR(
-        hipMemcpy(dcoo_row_ind, hcoo_row_ind.data(), sizeof(I) * nnz_A, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(
-        hipMemcpy(dcoo_col_ind, hcoo_col_ind.data(), sizeof(I) * nnz_A, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(hipMemcpy(dcoo_val, hcoo_val.data(), sizeof(T) * nnz_A, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(hipMemcpy(dx, hx, sizeof(T) * M, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(hipMemcpy(dy_1, hy_1, sizeof(T) * M, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(hipMemcpy(dy_2, hy_2, sizeof(T) * M, hipMemcpyHostToDevice));
-    CHECK_HIP_ERROR(hipMemcpy(dalpha, &halpha, sizeof(T), hipMemcpyHostToDevice));
-
-    // Create descriptors
-    rocsparse_local_spmat A(M, N, nnz_A, dcoo_row_ind, dcoo_col_ind, dcoo_val, itype, base, ttype);
-    rocsparse_local_dnvec x(M, dx, ttype);
-    rocsparse_local_dnvec y1(M, dy_1, ttype);
-    rocsparse_local_dnvec y2(M, dy_2, ttype);
-
+    //
+    // Create device data.
+    //
+    device_coo_matrix<T, I> dA(hA);
+    device_dense_vector<T>  dx(hx);
+    device_dense_vector<T>  dy(M);
+    device_scalar<T>        dalpha(halpha);
+    //
+    // Create descriptors.
+    //
+    rocsparse_local_spmat A(dA);
+    rocsparse_local_dnvec x(dx);
+    rocsparse_local_dnvec y(dy);
     CHECK_ROCSPARSE_ERROR(
         rocsparse_spmat_set_attribute(A, rocsparse_spmat_fill_mode, &uplo, sizeof(uplo)));
 
@@ -176,107 +116,195 @@ void testing_sptrsv_coo(const Arguments& arg)
     CHECK_ROCSPARSE_ERROR(rocsparse_spmat_set_attribute(
         A, rocsparse_spmat_matrix_type, &matrix_type, sizeof(matrix_type)));
 
-    // Query SpSV buffer
+    rocsparse_sptrsv_descr sptrsv_descr;
+    CHECK_ROCSPARSE_ERROR(rocsparse_create_sptrsv_descr(&sptrsv_descr));
+
+    rocsparse_error p_error[1] = {nullptr};
+    CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
+                                                     sptrsv_descr,
+                                                     rocsparse_sptrsv_input_operation,
+                                                     &trans_A,
+                                                     sizeof(trans_A),
+                                                     p_error));
+
+    CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(
+        handle, sptrsv_descr, rocsparse_sptrsv_input_alg, &alg, sizeof(alg), p_error));
+
+    {
+        const rocsparse_datatype ttype = get_datatype<T>();
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
+                                                         sptrsv_descr,
+                                                         rocsparse_sptrsv_input_scalar_datatype,
+                                                         &ttype,
+                                                         sizeof(ttype),
+                                                         p_error));
+    }
+
+    void*  buffer;
     size_t buffer_size;
-    CHECK_ROCSPARSE_ERROR(rocsparse_spsv(
-        handle, trans_A, &halpha, A, x, y1, ttype, alg, buffersize, &buffer_size, nullptr));
 
-    // Allocate buffer
-    void* dbuffer;
-    CHECK_HIP_ERROR(rocsparse_hipMalloc(&dbuffer, buffer_size));
+    CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_buffer_size(
+        handle, sptrsv_descr, A, x, y, rocsparse_sptrsv_stage_analysis, &buffer_size, p_error));
 
-    // Perform analysis on host
-    CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_host));
-    CHECK_ROCSPARSE_ERROR(rocsparse_spsv(
-        handle, trans_A, &halpha, A, x, y1, ttype, alg, preprocess, nullptr, dbuffer));
+    CHECK_HIP_ERROR(rocsparse_hipMalloc(&buffer, buffer_size));
 
-    // Perform analysis on device
-    CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_device));
-    CHECK_ROCSPARSE_ERROR(rocsparse_spsv(
-        handle, trans_A, dalpha, A, x, y2, ttype, alg, preprocess, nullptr, dbuffer));
+    CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv(handle,
+                                           sptrsv_descr,
+                                           A,
+                                           x,
+                                           y,
+                                           rocsparse_sptrsv_stage_analysis,
+                                           buffer_size,
+                                           buffer,
+                                           p_error));
+
+    CHECK_HIP_ERROR(hipDeviceSynchronize());
+
+    CHECK_HIP_ERROR(rocsparse_hipFree(buffer));
 
     if(arg.unit_check)
     {
-        // Solve on host
-        CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_host));
-        CHECK_ROCSPARSE_ERROR(testing::rocsparse_spsv(
-            handle, trans_A, &halpha, A, x, y1, ttype, alg, compute, &buffer_size, dbuffer));
-
-        // Solve on device
-        CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_device));
-        CHECK_ROCSPARSE_ERROR(testing::rocsparse_spsv(
-            handle, trans_A, dalpha, A, x, y2, ttype, alg, compute, &buffer_size, dbuffer));
-
-        CHECK_HIP_ERROR(hipDeviceSynchronize());
-
-        if(ROCSPARSE_REPRODUCIBILITY)
-        {
-            rocsparse_reproducibility::save(
-                "Y pointer mode host", dy_1, "Y pointer mode device", dy_2);
-        }
-
-        // Copy output to host
-        CHECK_HIP_ERROR(hipMemcpy(hy_1, dy_1, sizeof(T) * M, hipMemcpyDeviceToHost));
-        CHECK_HIP_ERROR(hipMemcpy(hy_2, dy_2, sizeof(T) * M, hipMemcpyDeviceToHost));
 
         // CPU coosv
-        I analysis_pivot = -1;
-        I solve_pivot    = -1;
+        host_dense_vector<T> hy(M);
+        I                    analysis_pivot = -1;
+        I                    solve_pivot    = -1;
+
         host_coosv(trans_A,
-                   M,
-                   nnz_A,
-                   halpha,
-                   hcoo_row_ind.data(),
-                   hcoo_col_ind.data(),
-                   hcoo_val.data(),
+                   hA.m,
+                   hA.nnz,
+                   *halpha,
+                   hA.row_ind.data(),
+                   hA.col_ind.data(),
+                   hA.val.data(),
                    hx.data(),
-                   hy_gold.data(),
+                   hy.data(),
                    diag,
                    uplo,
                    base,
                    &analysis_pivot,
                    &solve_pivot);
 
-        if(analysis_pivot == -1 && solve_pivot == -1)
+        const bool comparable = (analysis_pivot == -1 && solve_pivot == -1);
+
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_buffer_size(
+            handle, sptrsv_descr, A, x, y, rocsparse_sptrsv_stage_compute, &buffer_size, p_error));
+
+        CHECK_HIP_ERROR(rocsparse_hipMalloc(&buffer, buffer_size));
+        hipMemset(buffer, 0, buffer_size);
+
+        //
+        // Solve on host.
+        //
+        CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_host));
+
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
+                                                         sptrsv_descr,
+                                                         rocsparse_sptrsv_input_scalar_alpha,
+                                                         halpha.data(),
+                                                         sizeof(halpha.data()),
+                                                         p_error));
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv(handle,
+                                               sptrsv_descr,
+                                               A,
+                                               x,
+                                               y,
+                                               rocsparse_sptrsv_stage_compute,
+                                               buffer_size,
+                                               buffer,
+                                               p_error));
+
+        if(ROCSPARSE_REPRODUCIBILITY)
         {
-            hy_gold.near_check(hy_1);
-            hy_gold.near_check(hy_2);
+            rocsparse_reproducibility::save("Y pointer mode host", dy);
+        }
+
+        if(comparable)
+        {
+            hy.near_check(dy);
+        }
+
+        //
+        // Solve on device.
+        //
+        CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_device));
+
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
+                                                         sptrsv_descr,
+                                                         rocsparse_sptrsv_input_scalar_alpha,
+                                                         dalpha,
+                                                         sizeof(dalpha.data()),
+                                                         p_error));
+
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv(handle,
+                                               sptrsv_descr,
+                                               A,
+                                               x,
+                                               y,
+                                               rocsparse_sptrsv_stage_compute,
+                                               buffer_size,
+                                               buffer,
+                                               p_error));
+
+        CHECK_HIP_ERROR(hipDeviceSynchronize());
+
+        CHECK_HIP_ERROR(rocsparse_hipFree(buffer));
+
+        if(ROCSPARSE_REPRODUCIBILITY)
+        {
+            rocsparse_reproducibility::save("Y pointer mode device", dy);
+        }
+
+        if(comparable)
+        {
+            hy.near_check(dy);
         }
     }
 
     if(arg.timing)
     {
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_buffer_size(
+            handle, sptrsv_descr, A, x, y, rocsparse_sptrsv_stage_compute, &buffer_size, p_error));
+
+        CHECK_HIP_ERROR(rocsparse_hipMalloc(&buffer, buffer_size));
 
         CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_host));
+        CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
+                                                         sptrsv_descr,
+                                                         rocsparse_sptrsv_input_scalar_alpha,
+                                                         halpha,
+                                                         sizeof(halpha.data()),
+                                                         p_error));
 
-        const double gpu_time_used = rocsparse_clients::run_benchmark(arg,
-                                                                      rocsparse_spsv,
-                                                                      handle,
-                                                                      trans_A,
-                                                                      &halpha,
-                                                                      A,
-                                                                      x,
-                                                                      y1,
-                                                                      ttype,
-                                                                      alg,
-                                                                      compute,
-                                                                      &buffer_size,
-                                                                      dbuffer);
+        const double gpu_time_used
+            = rocsparse_clients::run_benchmark(arg,
+                                               rocsparse_sptrsv,
+                                               handle,
+                                               sptrsv_descr,
+                                               A,
+                                               x,
+                                               y,
+                                               rocsparse_sptrsv_stage_compute,
+                                               buffer_size,
+                                               buffer,
+                                               p_error);
 
-        double gflop_count = spsv_gflop_count(M, nnz_A, diag);
-        double gpu_gflops  = get_gpu_gflops(gpu_time_used, gflop_count);
+        CHECK_HIP_ERROR(rocsparse_hipFree(buffer));
 
-        double gbyte_count = coosv_gbyte_count<T>(M, nnz_A);
-        double gpu_gbyte   = get_gpu_gbyte(gpu_time_used, gbyte_count);
+        const double gflop_count = spsv_gflop_count(hA.m, hA.nnz, diag);
+        const double gpu_gflops  = get_gpu_gflops(gpu_time_used, gflop_count);
+
+        const double gbyte_count = coosv_gbyte_count<T>(hA.m, hA.nnz);
+        const double gpu_gbyte   = get_gpu_gbyte(gpu_time_used, gbyte_count);
 
         display_timing_info(display_key_t::M,
-                            M,
+                            hA.m,
                             display_key_t::nnz_A,
-                            nnz_A,
+                            hA.nnz,
                             display_key_t::alpha,
                             halpha,
                             display_key_t::algorithm,
-                            rocsparse_spsvalg2string(alg),
+                            rocsparse_sptrsvalg2string(alg),
                             display_key_t::gflops,
                             gpu_gflops,
                             display_key_t::bandwidth,
@@ -284,8 +312,6 @@ void testing_sptrsv_coo(const Arguments& arg)
                             display_key_t::time_ms,
                             get_gpu_time_msec(gpu_time_used));
     }
-
-    CHECK_HIP_ERROR(rocsparse_hipFree(dbuffer));
 }
 
 #define INSTANTIATE(ITYPE, TTYPE)                                                 \

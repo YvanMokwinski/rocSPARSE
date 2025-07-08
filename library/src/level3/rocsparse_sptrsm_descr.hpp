@@ -28,8 +28,8 @@ struct _rocsparse_sptrsm_descr
 protected:
     rocsparse_sptrsm_stage m_stage;
     rocsparse_sptrsm_alg   m_alg;
-    rocsparse_operation    m_operation;
-    rocsparse_operation    m_X_operation;
+    rocsparse_operation    m_operation_A;
+    rocsparse_operation    m_operation_X;
     rocsparse_datatype     m_X_datatype;
     rocsparse_datatype     m_Y_datatype;
     rocsparse_order        m_X_order;
@@ -37,6 +37,7 @@ protected:
     rocsparse_datatype     m_scalar_datatype;
     int64_t                m_zero_pivot_position;
     int64_t                m_nrhs;
+    const void*            m_scalar_alpha;
 
 public:
     ~_rocsparse_sptrsm_descr() = default;
@@ -48,11 +49,12 @@ public:
     rocsparse_sptrsm_alg   get_alg() const;
 
     int64_t             get_nrhs() const;
-    rocsparse_operation get_operation() const;
+    rocsparse_operation get_operation_A() const;
 
-    rocsparse_operation get_X_operation() const;
+    rocsparse_operation get_operation_X() const;
 
     rocsparse_datatype get_scalar_datatype() const;
+    const void*        get_scalar_alpha() const;
 
     rocsparse_datatype get_X_datatype() const;
 
@@ -64,10 +66,11 @@ public:
 
     void set_stage(rocsparse_sptrsm_stage value);
     void set_alg(rocsparse_sptrsm_alg value);
+    void set_scalar_alpha(const void* value);
 
-    void set_operation(rocsparse_operation value);
+    void set_operation_A(rocsparse_operation value);
 
-    void set_X_operation(rocsparse_operation value);
+    void set_operation_X(rocsparse_operation value);
 
     void set_scalar_datatype(rocsparse_datatype value);
 
