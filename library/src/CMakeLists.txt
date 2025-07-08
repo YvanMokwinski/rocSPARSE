@@ -33,6 +33,7 @@ set(rocsparse_source
   src/common/rocsparse_handle.cpp
   src/common/rocsparse_mat_info.cpp
   src/common/rocsparse_trm_info.cpp
+  src/common/rocsparse_sorted_coo2csr_info.cpp
   src/common/rocsparse_indextype_utils.cpp
   src/common/rocsparse_datatype_utils.cpp
   src/common/rocsparse_one.cpp
@@ -42,6 +43,7 @@ set(rocsparse_source
   src/common/rocsparse_envariables.cpp
   src/common/rocsparse_memstat.cpp
   src/common/rocsparse_debug.cpp
+  src/common/rocsparse_roctx.cpp
   src/common/rocsparse_argdescr.cpp
   src/common/rocsparse_message.cpp
   src/common/rocsparse_determine_indextype.cpp
@@ -63,9 +65,11 @@ set(rocsparse_source
   src/level1/rocsparse_doti.cpp
   src/level1/rocsparse_dotci.cpp
   src/level1/rocsparse_gthr.cpp
+  src/level1/rocsparse_gthr_impl.cpp
   src/level1/rocsparse_gthrz.cpp
   src/level1/rocsparse_roti.cpp
   src/level1/rocsparse_sctr.cpp
+  src/level1/rocsparse_sctr_impl.cpp
   src/level1/rocsparse_axpby.cpp
   src/level1/rocsparse_gather.cpp
   src/level1/rocsparse_scatter.cpp

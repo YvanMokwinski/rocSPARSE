@@ -30,6 +30,7 @@
 #include "rocsparse_handle.hpp"
 
 #if defined(ROCSPARSE_BUILT_WITH_ROCTX)
+#include "rocsparse_roctx.hpp"
 #include <roctracer/roctx.h>
 #endif
 
@@ -416,7 +417,7 @@ namespace rocsparse
     public:
         internal_roctx(const char* name)
         {
-            if(ROCSPARSE_ENVARIABLES.get(rocsparse::envariables::ROCTX))
+            if(rocsparse_roctx_variables.get_roctx_enabled())
             {
                 roctxRangePush(name);
             }
@@ -424,7 +425,7 @@ namespace rocsparse
 
         ~internal_roctx()
         {
-            if(ROCSPARSE_ENVARIABLES.get(rocsparse::envariables::ROCTX))
+            if(rocsparse_roctx_variables.get_roctx_enabled())
             {
                 roctxRangePop();
             }

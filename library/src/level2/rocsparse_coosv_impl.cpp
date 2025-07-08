@@ -108,10 +108,7 @@ rocsparse_status rocsparse::coosv_buffer_size_template(rocsparse_handle         
         // Trick since it is not used in csrsv_buffer_size, otherwise we need to create a proper ptr array for nothing.
         const int32_t* ptr = (const int32_t*)0x4;
         RETURN_IF_ROCSPARSE_ERROR((rocsparse::csrsv_buffer_size_template<int32_t, int32_t, T>(
-            handle, trans, m, nnz, descr, coo_val, ptr, coo_col_ind, info, buffer_size)));
-
-        // For coosv we first convert from COO to CSR format.
-        *buffer_size += sizeof(int32_t) * (m / 256 + 1) * 256;
+            handle, trans, m, (int32_t)nnz, descr, coo_val, ptr, coo_col_ind, info, buffer_size)));
     }
     else
     {
@@ -119,9 +116,6 @@ rocsparse_status rocsparse::coosv_buffer_size_template(rocsparse_handle         
         const int64_t* ptr = (const int64_t*)0x4;
         RETURN_IF_ROCSPARSE_ERROR((rocsparse::csrsv_buffer_size_template<int64_t, int64_t, T>(
             handle, trans, m, nnz, descr, coo_val, ptr, coo_col_ind, info, buffer_size)));
-
-        // For coosv we first convert from COO to CSR format.
-        *buffer_size += sizeof(int64_t) * (m / 256 + 1) * 256;
     }
 
     return rocsparse_status_success;
@@ -225,28 +219,35 @@ rocsparse_status rocsparse::coosv_analysis_template(rocsparse_handle          ha
     ROCSPARSE_CHECKARG_ARRAY(6, nnz, coo_row_ind);
     ROCSPARSE_CHECKARG_ARRAY(7, nnz, coo_col_ind);
 
+    const bool                choose_i32 = nnz < std::numeric_limits<int32_t>::max();
+    const rocsparse_indextype indextype
+        = choose_i32 ? rocsparse_indextype_i32 : rocsparse_indextype_i64;
+
     // Buffer
-    char* ptr = reinterpret_cast<char*>(temp_buffer);
-
-    if(std::is_same<I, int32_t>() && nnz < std::numeric_limits<int32_t>::max())
+    rocsparse::sorted_coo2csr_info_t* sorted_coo2csr_info = info->get_sorted_coo2csr_info();
+    if(sorted_coo2csr_info == nullptr)
     {
-        // convert to csr
-        int32_t* csr_row_ptr = reinterpret_cast<int32_t*>(ptr);
-        ptr += sizeof(int32_t) * (m / 256 + 1) * 256;
+        sorted_coo2csr_info = new rocsparse::sorted_coo2csr_info_t(m, indextype, handle->stream);
 
-        const I* csr_col_ind = coo_col_ind;
-        const T* csr_val     = coo_val;
+        //
+        // Assign it first, because if an error occurs in calculate below, then we won't have a memory leak.
+        //
+        info->set_sorted_coo2csr_info(sorted_coo2csr_info);
 
-        // Create column pointers
-        RETURN_IF_ROCSPARSE_ERROR((rocsparse::coo2csr_template(
-            handle, coo_row_ind, static_cast<int32_t>(nnz), m, csr_row_ptr, descr->base)));
+        RETURN_IF_ROCSPARSE_ERROR(sorted_coo2csr_info->calculate(
+            handle, nnz, coo_row_ind, rocsparse::get_indextype<I>(), descr->base));
+    }
 
-        // Call CSR analysis
-        RETURN_IF_ROCSPARSE_ERROR(
-            (rocsparse::csrsv_analysis_template<int32_t, int32_t, T>(handle,
+    const I* csr_col_ind = coo_col_ind;
+    const T* csr_val     = coo_val;
+
+    if(choose_i32)
+    {
+        const int32_t* csr_row_ptr = (const int32_t*)sorted_coo2csr_info->get_row_ptr();
+        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_analysis_template(handle,
                                                                      trans,
                                                                      m,
-                                                                     nnz,
+                                                                     static_cast<int32_t>(nnz),
                                                                      descr,
                                                                      csr_val,
                                                                      csr_row_ptr,
@@ -254,24 +255,12 @@ rocsparse_status rocsparse::coosv_analysis_template(rocsparse_handle          ha
                                                                      info,
                                                                      analysis,
                                                                      solve,
-                                                                     ptr)));
+                                                                     temp_buffer));
     }
     else
     {
-        // convert to csr
-        int64_t* csr_row_ptr = reinterpret_cast<int64_t*>(ptr);
-        ptr += sizeof(int64_t) * (m / 256 + 1) * 256;
-
-        const I* csr_col_ind = coo_col_ind;
-        const T* csr_val     = coo_val;
-
-        // Create column pointers
-        RETURN_IF_ROCSPARSE_ERROR(
-            (rocsparse::coo2csr_template(handle, coo_row_ind, nnz, m, csr_row_ptr, descr->base)));
-
-        // Call CSR analysis
-        RETURN_IF_ROCSPARSE_ERROR(
-            (rocsparse::csrsv_analysis_template<int64_t, int64_t, T>(handle,
+        const int64_t* csr_row_ptr = (const int64_t*)sorted_coo2csr_info->get_row_ptr();
+        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_analysis_template(handle,
                                                                      trans,
                                                                      m,
                                                                      nnz,
@@ -282,7 +271,7 @@ rocsparse_status rocsparse::coosv_analysis_template(rocsparse_handle          ha
                                                                      info,
                                                                      analysis,
                                                                      solve,
-                                                                     ptr)));
+                                                                     temp_buffer));
     }
 
     return rocsparse_status_success;
@@ -398,59 +387,54 @@ rocsparse_status rocsparse::coosv_solve_template(rocsparse_handle          handl
     ROCSPARSE_CHECKARG_ARRAY(7, nnz, coo_row_ind);
     ROCSPARSE_CHECKARG_ARRAY(8, nnz, coo_col_ind);
 
-    // Buffer
-    char* ptr = reinterpret_cast<char*>(temp_buffer);
-
-    if(std::is_same<I, int32_t>() && nnz < std::numeric_limits<int32_t>::max())
+    rocsparse::sorted_coo2csr_info_t* sorted_coo2csr_info = info->get_sorted_coo2csr_info();
+    if(sorted_coo2csr_info == nullptr)
     {
-        int32_t* csr_row_ptr = reinterpret_cast<int32_t*>(ptr);
-        ptr += sizeof(int32_t) * (m / 256 + 1) * 256;
-
-        const I* csr_col_ind = coo_col_ind;
-        const T* csr_val     = coo_val;
-
-        RETURN_IF_ROCSPARSE_ERROR(
-            (rocsparse::csrsv_solve_template<int32_t, int32_t, T>(handle,
+        RETURN_WITH_MESSAGE_IF_ROCSPARSE_ERROR(
+            rocsparse_status_internal_error,
+            "sorted_coo2csr_info is not available, it looks like the analysis phase of this "
+            "algorithm was not previously executed.");
+    }
+    const I*    csr_col_ind = coo_col_ind;
+    const T*    csr_val     = coo_val;
+    const void* csr_row_ptr = (const void*)sorted_coo2csr_info->get_row_ptr();
+    const bool  choose_i32  = nnz < std::numeric_limits<int32_t>::max();
+    if(choose_i32)
+    {
+        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve_template(handle,
                                                                   trans,
                                                                   m,
-                                                                  nnz,
+                                                                  static_cast<int32_t>(nnz),
                                                                   alpha_device_host,
                                                                   descr,
                                                                   csr_val,
-                                                                  csr_row_ptr,
+                                                                  (const int32_t*)csr_row_ptr,
                                                                   csr_col_ind,
                                                                   info,
                                                                   x,
                                                                   static_cast<int64_t>(1),
                                                                   y,
                                                                   policy,
-                                                                  ptr)));
+                                                                  temp_buffer));
         return rocsparse_status_success;
     }
     else
     {
-        int64_t* csr_row_ptr = reinterpret_cast<int64_t*>(ptr);
-        ptr += sizeof(int64_t) * (m / 256 + 1) * 256;
-
-        const I* csr_col_ind = coo_col_ind;
-        const T* csr_val     = coo_val;
-
-        RETURN_IF_ROCSPARSE_ERROR(
-            (rocsparse::csrsv_solve_template<int64_t, int64_t, T>(handle,
+        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve_template(handle,
                                                                   trans,
                                                                   m,
                                                                   nnz,
                                                                   alpha_device_host,
                                                                   descr,
                                                                   csr_val,
-                                                                  csr_row_ptr,
+                                                                  (const int64_t*)csr_row_ptr,
                                                                   csr_col_ind,
                                                                   info,
                                                                   x,
                                                                   static_cast<int64_t>(1),
                                                                   y,
                                                                   policy,
-                                                                  ptr)));
+                                                                  temp_buffer));
         return rocsparse_status_success;
     }
 }

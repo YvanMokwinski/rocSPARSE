@@ -269,6 +269,7 @@ const char* rocsparse::enum_utils::to_string(rocsparse_datatype value_)
         CASE(rocsparse_datatype_u8_r);
         CASE(rocsparse_datatype_i32_r);
         CASE(rocsparse_datatype_u32_r);
+        CASE(rocsparse_datatype_bf16_r);
 #undef CASE
     }
     // LCOV_EXCL_START
@@ -525,6 +526,7 @@ bool rocsparse::enum_utils::is_invalid(rocsparse_datatype value_)
     case rocsparse_datatype_u8_r:
     case rocsparse_datatype_i32_r:
     case rocsparse_datatype_u32_r:
+    case rocsparse_datatype_bf16_r:
     {
         return false;
     }
@@ -1169,6 +1171,11 @@ try
     case rocsparse_datatype_f16_r:
     {
         T_size = sizeof(_Float16);
+        break;
+    }
+    case rocsparse_datatype_bf16_r:
+    {
+        T_size = sizeof(rocsparse_bfloat16);
         break;
     }
     case rocsparse_datatype_f32_r:
@@ -5017,6 +5024,25 @@ try
 
     switch(input)
     {
+    case rocsparse_spgeam_input_scalar_alpha:
+    {
+        ROCSPARSE_CHECKARG(4,
+                           data_size_in_bytes,
+                           data_size_in_bytes != sizeof(void*),
+                           rocsparse_status_invalid_size);
+        descr->set_scalar_A(data);
+        return rocsparse_status_success;
+    }
+    case rocsparse_spgeam_input_scalar_beta:
+    {
+        ROCSPARSE_CHECKARG(4,
+                           data_size_in_bytes,
+                           data_size_in_bytes != sizeof(void*),
+                           rocsparse_status_invalid_size);
+        descr->set_scalar_B(data);
+        return rocsparse_status_success;
+    }
+
     case rocsparse_spgeam_input_alg:
     {
         ROCSPARSE_CHECKARG(4,

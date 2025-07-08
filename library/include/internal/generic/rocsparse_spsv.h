@@ -58,8 +58,7 @@ extern "C" {
 *  which will perform analysis on the sparse matrix \f$op(A)\f$. Finally, the user completes the computation by calling
 *  \p rocsparse_spsv with the stage \ref rocsparse_spsv_stage_compute. The buffer size, buffer allocation, and preprecess
 *  stages only need to be called once for a given sparse matrix \f$op(A)\f$ while the computation stage can be repeatedly
-*  used with different \f$x\f$ and \f$y\f$ vectors. Once all calls to \p rocsparse_spsv are complete, the temporary buffer
-*  can be deallocated.
+*  used with different \f$x\f$ and \f$y\f$ vectors.
 *
 *  \p rocsparse_spsv supports \ref rocsparse_indextype_i32 and \ref rocsparse_indextype_i64 index types for
 *  storing the row pointer and column indices arrays of the sparse matrices. \p rocsparse_spsv supports the following
@@ -115,6 +114,8 @@ extern "C" {
 *               \ref rocsparse_spsv_stage_buffer_size stage is passed,
 *               the required allocation size (in bytes) is written to \p buffer_size and
 *               function returns without performing the SpSV operation.
+*               This buffer is non-persistent, no data are stored in it; therefore, this memory
+*               can be freed or reuse for other tasks between the analysis phase and the compute phase.
 *
 *  \retval      rocsparse_status_success the operation completed successfully.
 *  \retval      rocsparse_status_invalid_handle the library context was not initialized.
@@ -227,6 +228,7 @@ extern "C" {
 *                  rocsparse_spsv_stage_preprocess,
 *                  &buffer_size,
 *                  temp_buffer);
+*
 *
 *   // Call spsv to perform computation
 *   rocsparse_spsv(handle,

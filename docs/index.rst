@@ -42,9 +42,11 @@ For ROCm code examples, see `<https://github.com/ROCm/rocm-examples>`_.
   .. grid-item-card:: API reference
 
     * :ref:`api`
+    * :ref:`debugging_`
     * :ref:`rocsparse_types_`
     * :ref:`rocsparse_precision_support_`
     * :ref:`rocsparse_environment_variables_`
+    * :ref:`rocsparse_roctx_`
     * :ref:`rocsparse_enumerations_`
     * :ref:`rocsparse_auxiliary_functions_`
     * :ref:`rocsparse_level1_functions_`

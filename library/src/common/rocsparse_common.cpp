@@ -699,12 +699,14 @@ INSTANTIATE(int64_t, int64_t);
     template rocsparse_status rocsparse::valset_2d( \
         rocsparse_handle handle, I m, I n, int64_t ld, T value, T* array, rocsparse_order order);
 INSTANTIATE(int32_t, _Float16);
+INSTANTIATE(int32_t, rocsparse_bfloat16);
 INSTANTIATE(int32_t, float);
 INSTANTIATE(int32_t, double);
 INSTANTIATE(int32_t, rocsparse_float_complex);
 INSTANTIATE(int32_t, rocsparse_double_complex);
 
 INSTANTIATE(int64_t, _Float16);
+INSTANTIATE(int64_t, rocsparse_bfloat16);
 INSTANTIATE(int64_t, float);
 INSTANTIATE(int64_t, double);
 INSTANTIATE(int64_t, rocsparse_float_complex);
@@ -715,6 +717,7 @@ INSTANTIATE(int64_t, rocsparse_double_complex);
     template rocsparse_status rocsparse::scale_array( \
         rocsparse_handle handle, ITYPE length, const TTYPE* scalar_device_host, ATYPE* array);
 
+INSTANTIATE(int32_t, rocsparse_bfloat16, float);
 INSTANTIATE(int32_t, _Float16, float);
 INSTANTIATE(int32_t, int32_t, int32_t);
 INSTANTIATE(int32_t, float, float);
@@ -722,6 +725,7 @@ INSTANTIATE(int32_t, double, double);
 INSTANTIATE(int32_t, rocsparse_float_complex, rocsparse_float_complex);
 INSTANTIATE(int32_t, rocsparse_double_complex, rocsparse_double_complex);
 
+INSTANTIATE(int64_t, rocsparse_bfloat16, float);
 INSTANTIATE(int64_t, _Float16, float);
 INSTANTIATE(int64_t, int32_t, int32_t);
 INSTANTIATE(int64_t, float, float);

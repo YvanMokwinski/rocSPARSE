@@ -1,6 +1,6 @@
 /*! \file */
 /* ************************************************************************
- * Copyright (C) 2025 Advanced Micro Devices, Inc. All rights Reserved.
+ * Copyright (C) 2020-2025 Advanced Micro Devices, Inc. All rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,7 @@
  * THE SOFTWARE.
  *
  * ************************************************************************ */
-
 #include "internal/level3/rocsparse_csrsm.h"
-
 #include "rocsparse_csrsm.hpp"
 
 #include "rocsparse_assign_async.hpp"
@@ -50,7 +48,7 @@ namespace rocsparse
                T* __restrict__ B,
                int64_t ldb,
                int* __restrict__ done_array,
-               J* __restrict__ map,
+               const J* __restrict__ map,
                J* __restrict__ zero_pivot,
                rocsparse_index_base idx_base,
                rocsparse_fill_mode  fill_mode,
@@ -153,7 +151,7 @@ namespace rocsparse
         if(descr->diag_type == rocsparse_diag_type_unit)
         {
             RETURN_IF_ROCSPARSE_ERROR(rocsparse::assign_async(
-                static_cast<J*>(info->zero_pivot), std::numeric_limits<J>::max(), stream));
+                reinterpret_cast<J*>(info->zero_pivot), std::numeric_limits<J>::max(), stream));
         }
 
         // Leading dimension
@@ -166,7 +164,7 @@ namespace rocsparse
             ldimB = nrhs;
 
             RETURN_IF_ROCSPARSE_ERROR(
-                rocsparse::dense_transpose_template(handle, m, nrhs, (T)1, B, ldb, Bt, ldimB));
+                rocsparse::dense_transpose(handle, m, nrhs, (T)1, B, ldb, Bt, ldimB));
         }
 
         // Pointers to differentiate between transpose mode
@@ -185,12 +183,12 @@ namespace rocsparse
 
             // Gather values
             RETURN_IF_ROCSPARSE_ERROR(
-                rocsparse::gthr_template(handle,
-                                         nnz,
-                                         csr_val,
-                                         csrt_val,
-                                         (const I*)csrsm_info->get_transposed_perm(),
-                                         rocsparse_index_base_zero));
+                (rocsparse::gthr_template<I, T>(handle,
+                                                nnz,
+                                                csr_val,
+                                                csrt_val,
+                                                (const I*)csrsm_info->get_transposed_perm(),
+                                                rocsparse_index_base_zero)));
 
             if(trans_A == rocsparse_operation_conjugate_transpose)
             {
@@ -237,7 +235,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -262,7 +260,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -290,7 +288,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -315,7 +313,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -343,7 +341,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -368,7 +366,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -396,7 +394,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -421,7 +419,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -449,7 +447,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -474,7 +472,7 @@ namespace rocsparse
                         Bt,
                         ldimB,
                         done_array,
-                        (J*)csrsm_info->get_row_map(),
+                        (const J*)csrsm_info->get_row_map(),
                         (J*)info->zero_pivot,
                         descr->base,
                         fill_mode,
@@ -514,15 +512,15 @@ template <typename I, typename J, typename T>
 rocsparse_status rocsparse::csrsm_solve_core(rocsparse_handle          handle,
                                              rocsparse_operation       trans_A,
                                              rocsparse_operation       trans_B,
-                                             int64_t                   m_,
-                                             int64_t                   nrhs_,
-                                             int64_t                   nnz_,
-                                             const void*               alpha_,
+                                             J                         m,
+                                             J                         nrhs,
+                                             I                         nnz,
+                                             const T*                  alpha,
                                              const rocsparse_mat_descr descr,
-                                             const void*               csr_val_,
-                                             const void*               csr_row_ptr_,
-                                             const void*               csr_col_ind_,
-                                             void*                     B_,
+                                             const T*                  csr_val,
+                                             const I*                  csr_row_ptr,
+                                             const J*                  csr_col_ind,
+                                             T*                        B,
                                              int64_t                   ldb,
                                              rocsparse_order           order_B,
                                              rocsparse_mat_info        info,
@@ -530,15 +528,6 @@ rocsparse_status rocsparse::csrsm_solve_core(rocsparse_handle          handle,
                                              void*                     temp_buffer)
 {
     ROCSPARSE_ROUTINE_TRACE;
-
-    const J  m           = static_cast<J>(m_);
-    const J  nrhs        = static_cast<J>(nrhs_);
-    const I  nnz         = static_cast<I>(nnz_);
-    const T* alpha       = reinterpret_cast<const T*>(alpha_);
-    const T* csr_val     = reinterpret_cast<const T*>(csr_val_);
-    const I* csr_row_ptr = reinterpret_cast<const I*>(csr_row_ptr_);
-    const J* csr_col_ind = reinterpret_cast<const J*>(csr_col_ind_);
-    T*       B           = reinterpret_cast<T*>(B_);
 
     if(nrhs == 1)
     {
@@ -551,21 +540,21 @@ rocsparse_status rocsparse::csrsm_solve_core(rocsparse_handle          handle,
         const int64_t b_inc
             = (trans_B == rocsparse_operation_none && order_B == rocsparse_order_column) ? 1 : ldb;
 
-        RETURN_IF_ROCSPARSE_ERROR((rocsparse::csrsv_solve_template<I, J, T>(handle,
-                                                                            trans_A,
-                                                                            m,
-                                                                            nnz,
-                                                                            alpha,
-                                                                            descr,
-                                                                            csr_val,
-                                                                            csr_row_ptr,
-                                                                            csr_col_ind,
-                                                                            info,
-                                                                            B,
-                                                                            b_inc,
-                                                                            y,
-                                                                            policy,
-                                                                            temp_buffer)));
+        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsv_solve_template(handle,
+                                                                  trans_A,
+                                                                  m,
+                                                                  nnz,
+                                                                  alpha,
+                                                                  descr,
+                                                                  csr_val,
+                                                                  csr_row_ptr,
+                                                                  csr_col_ind,
+                                                                  info,
+                                                                  B,
+                                                                  b_inc,
+                                                                  y,
+                                                                  policy,
+                                                                  temp_buffer));
 
         if((trans_B == rocsparse_operation_none && order_B == rocsparse_order_column))
         {
@@ -789,46 +778,45 @@ namespace rocsparse
             return rocsparse_status_success;
         }
 
-        RETURN_IF_ROCSPARSE_ERROR((rocsparse::csrsm_solve_core<I, J, T>(handle,
-                                                                        trans_A,
-                                                                        trans_B,
-                                                                        m,
-                                                                        nrhs,
-                                                                        nnz,
-                                                                        alpha,
-                                                                        descr,
-                                                                        csr_val,
-                                                                        csr_row_ptr,
-                                                                        csr_col_ind,
-                                                                        B,
-                                                                        ldb,
-                                                                        order_B,
-                                                                        info,
-                                                                        policy,
-                                                                        temp_buffer)));
+        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsm_solve_core(handle,
+                                                              trans_A,
+                                                              trans_B,
+                                                              m,
+                                                              nrhs,
+                                                              nnz,
+                                                              alpha,
+                                                              descr,
+                                                              csr_val,
+                                                              csr_row_ptr,
+                                                              csr_col_ind,
+                                                              B,
+                                                              ldb,
+                                                              order_B,
+                                                              info,
+                                                              policy,
+                                                              temp_buffer));
         return rocsparse_status_success;
     }
 }
 
-#define INSTANTIATE(I, J, T)                                        \
-    template rocsparse_status rocsparse::csrsm_solve_core<I, J, T>( \
-        rocsparse_handle          handle,                           \
-        rocsparse_operation       trans_A,                          \
-        rocsparse_operation       trans_B,                          \
-        int64_t                   m,                                \
-        int64_t                   nrhs,                             \
-        int64_t                   nnz,                              \
-        const void*               alpha,                            \
-        const rocsparse_mat_descr descr,                            \
-        const void*               csr_val,                          \
-        const void*               csr_row_ptr,                      \
-        const void*               csr_col_ind,                      \
-        void*                     B,                                \
-        int64_t                   ldb,                              \
-        rocsparse_order           order_B,                          \
-        rocsparse_mat_info        info,                             \
-        rocsparse_solve_policy    policy,                           \
-        void*                     temp_buffer);
+#define INSTANTIATE(ITYPE, JTYPE, TTYPE)                                                         \
+    template rocsparse_status rocsparse::csrsm_solve_core(rocsparse_handle          handle,      \
+                                                          rocsparse_operation       trans_A,     \
+                                                          rocsparse_operation       trans_B,     \
+                                                          JTYPE                     m,           \
+                                                          JTYPE                     nrhs,        \
+                                                          ITYPE                     nnz,         \
+                                                          const TTYPE*              alpha,       \
+                                                          const rocsparse_mat_descr descr,       \
+                                                          const TTYPE*              csr_val,     \
+                                                          const ITYPE*              csr_row_ptr, \
+                                                          const JTYPE*              csr_col_ind, \
+                                                          TTYPE*                    B,           \
+                                                          int64_t                   ldb,         \
+                                                          rocsparse_order           order_B,     \
+                                                          rocsparse_mat_info        info,        \
+                                                          rocsparse_solve_policy    policy,      \
+                                                          void*                     temp_buffer);
 
 INSTANTIATE(int32_t, int32_t, float);
 INSTANTIATE(int32_t, int32_t, double);
@@ -844,49 +832,53 @@ INSTANTIATE(int64_t, int64_t, rocsparse_float_complex);
 INSTANTIATE(int64_t, int64_t, rocsparse_double_complex);
 #undef INSTANTIATE
 
-#define C_IMPL(NAME, T)                                                                           \
-    extern "C" rocsparse_status NAME(rocsparse_handle          handle,                            \
-                                     rocsparse_operation       trans_A,                           \
-                                     rocsparse_operation       trans_B,                           \
-                                     rocsparse_int             m,                                 \
-                                     rocsparse_int             nrhs,                              \
-                                     rocsparse_int             nnz,                               \
-                                     const T*                  alpha,                             \
-                                     const rocsparse_mat_descr descr,                             \
-                                     const T*                  csr_val,                           \
-                                     const rocsparse_int*      csr_row_ptr,                       \
-                                     const rocsparse_int*      csr_col_ind,                       \
-                                     T*                        B,                                 \
-                                     rocsparse_int             ldb,                               \
-                                     rocsparse_mat_info        info,                              \
-                                     rocsparse_solve_policy    policy,                            \
-                                     void*                     temp_buffer)                       \
-    try                                                                                           \
-    {                                                                                             \
-        ROCSPARSE_ROUTINE_TRACE;                                                                  \
-        RETURN_IF_ROCSPARSE_ERROR(                                                                \
-            (rocsparse::csrsm_solve_impl<rocsparse_int, rocsparse_int, T>(handle,                 \
-                                                                          trans_A,                \
-                                                                          trans_B,                \
-                                                                          m,                      \
-                                                                          nrhs,                   \
-                                                                          nnz,                    \
-                                                                          alpha,                  \
-                                                                          descr,                  \
-                                                                          csr_val,                \
-                                                                          csr_row_ptr,            \
-                                                                          csr_col_ind,            \
-                                                                          B,                      \
-                                                                          ldb,                    \
-                                                                          rocsparse_order_column, \
-                                                                          info,                   \
-                                                                          policy,                 \
-                                                                          temp_buffer)));         \
-        return rocsparse_status_success;                                                          \
-    }                                                                                             \
-    catch(...)                                                                                    \
-    {                                                                                             \
-        RETURN_ROCSPARSE_EXCEPTION();                                                             \
+/*
+ * ===========================================================================
+ *    C wrapper
+ * ===========================================================================
+ */
+#define C_IMPL(NAME, TTYPE)                                                           \
+    extern "C" rocsparse_status NAME(rocsparse_handle          handle,                \
+                                     rocsparse_operation       trans_A,               \
+                                     rocsparse_operation       trans_B,               \
+                                     rocsparse_int             m,                     \
+                                     rocsparse_int             nrhs,                  \
+                                     rocsparse_int             nnz,                   \
+                                     const TTYPE*              alpha,                 \
+                                     const rocsparse_mat_descr descr,                 \
+                                     const TTYPE*              csr_val,               \
+                                     const rocsparse_int*      csr_row_ptr,           \
+                                     const rocsparse_int*      csr_col_ind,           \
+                                     TTYPE*                    B,                     \
+                                     rocsparse_int             ldb,                   \
+                                     rocsparse_mat_info        info,                  \
+                                     rocsparse_solve_policy    policy,                \
+                                     void*                     temp_buffer)           \
+    try                                                                               \
+    {                                                                                 \
+        ROCSPARSE_ROUTINE_TRACE;                                                      \
+        RETURN_IF_ROCSPARSE_ERROR(rocsparse::csrsm_solve_impl(handle,                 \
+                                                              trans_A,                \
+                                                              trans_B,                \
+                                                              m,                      \
+                                                              nrhs,                   \
+                                                              nnz,                    \
+                                                              alpha,                  \
+                                                              descr,                  \
+                                                              csr_val,                \
+                                                              csr_row_ptr,            \
+                                                              csr_col_ind,            \
+                                                              B,                      \
+                                                              ldb,                    \
+                                                              rocsparse_order_column, \
+                                                              info,                   \
+                                                              policy,                 \
+                                                              temp_buffer));          \
+        return rocsparse_status_success;                                              \
+    }                                                                                 \
+    catch(...)                                                                        \
+    {                                                                                 \
+        RETURN_ROCSPARSE_EXCEPTION();                                                 \
     }
 
 C_IMPL(rocsparse_scsrsm_solve, float);
