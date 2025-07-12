@@ -206,7 +206,6 @@ void testing_sptrsv_csr(const Arguments& arg)
         //
         CHECK_ROCSPARSE_ERROR(rocsparse_set_pointer_mode(handle, rocsparse_pointer_mode_device));
 
-        std::cout << "dalpha  " << dalpha.data() << std::endl;
         CHECK_ROCSPARSE_ERROR(rocsparse_sptrsv_set_input(handle,
                                                          sptrsv_descr,
                                                          rocsparse_sptrsv_input_scalar_alpha,
