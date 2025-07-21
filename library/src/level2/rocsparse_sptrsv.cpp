@@ -178,7 +178,6 @@ extern "C" rocsparse_status rocsparse_sptrsv_get_output(rocsparse_handle        
 try
 {
     ROCSPARSE_ROUTINE_TRACE;
-
     ROCSPARSE_CHECKARG_HANDLE(0, handle);
     ROCSPARSE_CHECKARG_POINTER(1, descr);
     ROCSPARSE_CHECKARG_ENUM(2, output);
